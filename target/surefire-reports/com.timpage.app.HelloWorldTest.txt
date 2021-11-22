@@ -1,0 +1,10 @@
+-------------------------------------------------------------------------------
+Test set: com.timpage.app.HelloWorldTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.116 s <<< FAILURE! - in com.timpage.app.HelloWorldTest
+testBothInOrder(com.timpage.app.HelloWorldTest)  Time elapsed: 0.085 s  <<< ERROR!
+javax.xml.bind.JAXBException: Implementation of JAXB-API has not been found on module path or classpath.
+	at com.timpage.app.HelloWorldTest.testBothInOrder(HelloWorldTest.java:142)
+Caused by: java.lang.ClassNotFoundException: com.sun.xml.internal.bind.v2.ContextFactory
+	at com.timpage.app.HelloWorldTest.testBothInOrder(HelloWorldTest.java:142)
+
