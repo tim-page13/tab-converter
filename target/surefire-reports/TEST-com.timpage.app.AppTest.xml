@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.timpage.app.AppTest" time="9.605" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.timpage.app.AppTest" time="0.66" tests="2" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="15"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -12,7 +12,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="GB"/>
     <property name="sun.boot.library.path" value="/Library/Java/JavaVirtualMachines/jdk-15.jdk/Contents/Home/lib"/>
-    <property name="sun.java.command" value="/Users/timpage/Documents/Uni/Year3/project/tab-converter/target/surefire/surefirebooter9223594357426375134.jar /Users/timpage/Documents/Uni/Year3/project/tab-converter/target/surefire 2021-11-22T12-23-04_512-jvmRun1 surefire3046559789474479023tmp surefire_03466367070570513890tmp"/>
+    <property name="sun.java.command" value="/Users/timpage/Documents/Uni/Year3/project/tab-converter/target/surefire/surefirebooter288193694781101029.jar /Users/timpage/Documents/Uni/Year3/project/tab-converter/target/surefire 2022-01-11T18-22-54_451-jvmRun1 surefire13441060221193773847tmp surefire_09481377185576696215tmp"/>
     <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="/Users/timpage/Documents/Uni/Year3/project/tab-converter/target/test-classes:/Users/timpage/Documents/Uni/Year3/project/tab-converter/target/classes:/Users/timpage/.m2/repository/junit/junit/4.12/junit-4.12.jar:/Users/timpage/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:/Users/timpage/Documents/Uni/Year3/project/Libraries/jsoup-1.14.3.jar:/Users/timpage/.m2/repository/commons-cli/commons-cli/1.4/commons-cli-1.4.jar:"/>
@@ -28,7 +28,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
-    <property name="surefire.real.class.path" value="/Users/timpage/Documents/Uni/Year3/project/tab-converter/target/surefire/surefirebooter9223594357426375134.jar"/>
+    <property name="surefire.real.class.path" value="/Users/timpage/Documents/Uni/Year3/project/tab-converter/target/surefire/surefirebooter288193694781101029.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.runtime.version" value="15+36-1562"/>
@@ -53,6 +53,6 @@
     <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.class.version" value="59.0"/>
   </properties>
-  <testcase name="ParserIsProducingOutput" classname="com.timpage.app.AppTest" time="0.002"/>
-  <testcase name="testTabConverter" classname="com.timpage.app.AppTest" time="9.488"/>
+  <testcase name="ParserIsProducingOutput" classname="com.timpage.app.AppTest" time="0.003"/>
+  <testcase name="testTabConverter" classname="com.timpage.app.AppTest" time="0.628"/>
 </testsuite>

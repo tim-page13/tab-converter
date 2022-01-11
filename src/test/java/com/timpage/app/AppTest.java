@@ -95,13 +95,14 @@ public class AppTest
         try {
 
             // String filename = "../OtherTestMusic/xmlsamples/BrookeWestSample.musicxml";
-            String filename = "../GuitarPro7Files/PinkFloyd-WishYouWereHere.xml";
+            // String filename = "../GuitarPro7Files/PinkFloyd-WishYouWereHere.xml";
             // String filename = "../GuitarPro7Files/Test1.xml";
-            // String filename = "../OtherTestMusic/Nick Jonas - Guitar Solo On Acm Awards 2016.xml";
+            String filename = "../OtherTestMusic/Nick Jonas - Guitar Solo On Acm Awards 2016.xml";
 
             TabConverter tc = new TabConverter(filename);
 
-            ArrayList<ArrayList<Note>> sm = tc.convertToTab();
+            // ArrayList<ArrayList<Note>> sm = tc.convertToTab();
+            ArrayList<ArrayList<ArrayList<Note>>> spm = tc.convertPartsToTab();
 
         } catch (IOException e1) {
             e1.printStackTrace();

@@ -120,13 +120,13 @@ public class musicXMLparserDH {
         //voicesIndex = getNumberOfVoices();
 
         notesOfSong = getAllNotes();
-        // notesOfSongParts = getAllNotesParts();
+        notesOfSongParts = getAllNotesParts();
 
 
         flatSong = setSongArrayOfStrings(notesOfSong);
 
         songMatrix = setSongMatrix(notesOfSong);
-        // songPartMatrix = setSongPartMatrix(notesOfSongParts);
+        songPartMatrix = setSongPartMatrix(notesOfSongParts);
 
 
         //set ID for each note
@@ -162,6 +162,10 @@ public class musicXMLparserDH {
 
     public ArrayList<ArrayList<Note>> getSongMatrix() {
         return songMatrix;
+    }
+
+    public ArrayList<ArrayList<ArrayList<Note>>> getSongPartMatrix() {
+        return songPartMatrix;
     }
 
     public ArrayList<Note> getNotesOfSongNoRests() {
@@ -259,6 +263,7 @@ public class musicXMLparserDH {
             // System.out.print("starters: " + inote.getStartTime() + " ");
         }
 
+        // System.out.println("numberOfSlices: " + numberOfSlices);
 
         ArrayList<ArrayList<Note>> songMatrix = new ArrayList<>();
         //array in elaine's string format
@@ -273,8 +278,9 @@ public class musicXMLparserDH {
 
         //String[] PitchesSong;
         //PitchesSong = new String[numberOfSlices];
+
         for (Note inote : notesOfSong) {
-            //System.out.print(inote.getDuration() );
+            // System.out.print(inote.getStartTime() + ":" + inote.getDuration() + ", ");
             if (inote.getPitch() != "Z") {
                 for (int i = 0; i < inote.getDuration(); i++) {
 
@@ -283,8 +289,18 @@ public class musicXMLparserDH {
             }
         }
 
-
-
+        //todo remove this section - just for testing
+        // int countNotes = 0;
+        // int countSlices = 0;
+        // for (int j=0; j<songMatrix.size(); j++) {
+        //     countSlices++;
+        //     // for each note
+        //     for (int k=0; k<songMatrix.get(j).size(); k++) {
+        //         countNotes++;
+        //         // System.out.printf(" %s%s,", songMatrix.get(i).get(j).get(k).getPitch(), songMatrix.get(i).get(j).get(k).getAccidental());
+        //     }
+        // }
+        // System.out.printf("\n non-partwise %d:%d:%d", countSlices, countNotes, notesOfSong.size());
 
 
         return songMatrix;
@@ -296,40 +312,83 @@ public class musicXMLparserDH {
         //list of note ideas per slice
         ArrayList<ArrayList<ArrayList<Note>>> songPartMatrix = new ArrayList<>();
 
-        //todo
+        // System.out.println("\n(number of parts) notesOfSong.size(): " + notesOfSong.size());
+        // iterate through each part
         for (int i=0; i<notesOfSong.size(); i++) {
+            ArrayList<ArrayList<Note>> partiMatrix = new ArrayList<>();
+            // System.out.println("(number of slices in part " + i + ") notesOfSong.get(" + i + ").size(): " + notesOfSong.get(i).size());
+            // iterate through each slice of concurrent notes
             Integer numberOfSlices = 0;
-            for (Note inote : notesOfSong.get(i)) {
-                if (inote.getDuration() + inote.getStartTime() > numberOfSlices) {
-                    numberOfSlices = inote.getDuration() + inote.getStartTime();
-                }
-                // System.out.print("starters: " + inote.getStartTime() + " ");
+            int noteCount = 0;
+            for (int k=0; k<notesOfSong.get(i).size(); k++) {
+                noteCount++;
+                // iterate through notes in the slice
+                // for (Note inote : notesOfSong.get(i)) {
+                    if (notesOfSong.get(i).get(k).getDuration() + notesOfSong.get(i).get(k).getStartTime() > numberOfSlices) {
+                        numberOfSlices = notesOfSong.get(i).get(k).getDuration() + notesOfSong.get(i).get(k).getStartTime();
+                        // System.out.println("numberOfSlices: " + numberOfSlices);
+                    }
+                    // if (inote.getDuration() + inote.getStartTime() > numberOfSlices) {
+                    //     numberOfSlices = inote.getDuration() + inote.getStartTime();
+                    // }
+                    // System.out.print("starters: " + inote.getStartTime() + " ");
+                // }
             }
 
+            // System.out.println("numberOfSlices: " + numberOfSlices);
+            // System.out.println("noteCount: " + noteCount);
+                
+            // add an arraylist for each slice of notes
             for (int j = 0; j < numberOfSlices; j++){
-
                 ArrayList<Note> mylist = new ArrayList<Note>();
-                songPartMatrix.get(i).add(mylist);
-    
+                partiMatrix.add(mylist);
             }
+
+            // add the instrument part to the matrix with all the instrument parts
+            songPartMatrix.add(partiMatrix);
         }
             
 
         //String[] PitchesSong;
         //PitchesSong = new String[numberOfSlices];
         // for (ArrayList<Note> part : notesOfSong) {
+        // for each instrumental part
+        // int noteCount = 0;
         for (int i=0; i<notesOfSong.size(); i++) {
-
+            // for each note in the part
             for (Note inote : notesOfSong.get(i)) {
-                //System.out.print(inote.getDuration() );
+                // System.out.print(inote.getStartTime() + ":" + inote.getDuration() + ", ");
                 if (inote.getPitch() != "Z") {
                     for (int j = 0; j < inote.getDuration(); j++) {
-                        
+                        // noteCount++;
                         songPartMatrix.get(i).get(j + inote.getStartTime()).add(inote);
                     }
                 }
             }
         }
+
+        //todo remove this section - just for testing
+        // System.out.println("noteCount1: " + noteCount);
+
+        // int countNotes = 0;
+        // int countSlices = 0;
+        // // for each part
+        // for (int i=0; i<songPartMatrix.size(); i++) {
+        //     // for each slice of notes
+        //     System.out.println("songPartMatrix.get(i).size() " + songPartMatrix.get(i).size());
+        //     for (int j=0; j<songPartMatrix.get(i).size(); j++) {
+        //         // System.out.println("songPartMatrix.get(i).get(j).size() " + songPartMatrix.get(i).get(j).size());
+        //         countSlices++;
+        //         // for each note
+        //         for (int k=0; k<songPartMatrix.get(i).get(j).size(); k++) {
+        //             countNotes++;
+        //             // System.out.printf(" %s%s,", songPartMatrix.get(i).get(j).get(k).getPitch(), songPartMatrix.get(i).get(j).get(k).getAccidental());
+        //         }
+        //     }
+        //     System.out.printf(" %d:%d:%d", countSlices, countNotes, notesOfSong.get(0).size());
+        // }
+        // System.out.println("songPartMatrix.size() " + songPartMatrix.size());
+        
 
         return songPartMatrix;
 
@@ -956,13 +1015,15 @@ public class musicXMLparserDH {
 
 
                         note.setMeasure(Integer.valueOf(measure));
-                        // System.out.print(z);
+                        // System.out.print(" " + notesOfSong.size() + ":");
+                        // System.out.print(" " + z);
                         if (notesOfSong.size() <= z) {
                             ArrayList<Note> part = new ArrayList<Note>();
                             part.add(note);
                             notesOfSong.add(part);
                         }
                         else {
+                            // System.out.print(":" + notesOfSong.get(z).size());
                             notesOfSong.get(z).add(note);
                         }
 
