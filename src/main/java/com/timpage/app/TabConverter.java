@@ -246,48 +246,24 @@ public class TabConverter {
                             }
                         }
                         if (aNote) {
-                            System.out.printf("\n%s%d%s ", songPartMatrix.get(l).get(i).get(j).getPitch(), songPartMatrix.get(l).get(i).get(j).getOctave(), songPartMatrix.get(l).get(i).get(j).getAccidental());
-                            System.out.printf("string: %d fret: %d ", (songPartMatrix.get(l).get(i).get(j).getStringNo()+1), songPartMatrix.get(l).get(i).get(j).getFretNo());
-                            if (!thisnote.getElementsByTag("notations").isEmpty()) {
-                                if (!thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").isEmpty()) {
-                                    if (thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0).getElementsByTag("string").isEmpty()) {
-                                        thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0).appendElement("string");
-                                        thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0).getElementsByTag("string").get(0).append((songPartMatrix.get(l).get(i).get(j).getStringNo()+1) + "");
-                                        System.out.println("written string data [1]");
-                                    }
-                                    else {
-                                        System.out.println("\nstring data already exists [2] " + thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0).getElementsByTag("string").text());
-
-                                    }
-                                    if (thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0).getElementsByTag("fret").isEmpty()) {
-                                        thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0).appendElement("fret");
-                                        thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0).getElementsByTag("fret").get(0).append(songPartMatrix.get(l).get(i).get(j).getFretNo() + "");
-                                        System.out.println("written fret data [3]");
-                                    }
-                                    else {
-                                        System.out.println("fret data already exists [4] " + thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0).getElementsByTag("fret").text());
-                                    }
-                                }
-                                else {
-                                    Element technical = thisnote.getElementsByTag("notations").get(0).appendElement("technical");
-                                    technical.appendElement("string").append(""+(songPartMatrix.get(l).get(i).get(j).getStringNo()+1));
-                                    technical.appendElement("fret").append(""+songPartMatrix.get(l).get(i).get(j).getFretNo());
-                                    System.out.println("written technical data [5]");
-                                }
+                            // add tags to the note if missing
+                            if (thisnote.getElementsByTag("notations").isEmpty()) {
+                                thisnote.appendElement("notations").appendElement("technical");
                             }
-                            else {
-                                Element technical = thisnote.appendElement("notations").appendElement("technical");
-                                technical.appendElement("string").append(""+(songPartMatrix.get(l).get(i).get(j).getStringNo()+1));
-                                technical.appendElement("fret").append(""+songPartMatrix.get(l).get(i).get(j).getFretNo());
-                                System.out.println("written notation data [6]");
+                            if (thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").isEmpty()) {
+                                thisnote.getElementsByTag("notations").get(0).appendElement("technical");
                             }
+                            Element technical = thisnote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0);
+                            // the string and fret data 
+                            technical.appendElement("string").append((songPartMatrix.get(l).get(i).get(j).getStringNo()+1) + "");
+                            technical.appendElement("fret").append(songPartMatrix.get(l).get(i).get(j).getFretNo() + "");
                         }
                         else {
                             System.out.println("[[[ERROR NO NOTE FOUND]]]");
                         }
                         
                     }
-                    System.out.println();
+
                 }
 
                 
@@ -295,6 +271,7 @@ public class TabConverter {
             
         }        
 
+        // write the changes to the file
         WriteFile();
         return songPartMatrix;
 
