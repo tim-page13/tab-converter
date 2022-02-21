@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Page Title</title>
+    </head>
+    <body>
+
+        <h1>My First Heading</h1>
+        <p>My first paragraph.</p>
+
+        <div id="osmdContainer"/>
+        <script src="opensheetmusicdisplay.min.js"></script>
+        <script>
+        var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmdContainer", {
+            autoResize: true, // just an example for an option, no option is necessary.
+            backend: "svg",
+            drawTitle: true,
+            // put further options here
+          });
+          osmd.load("../OtherTestMusic/Nick Jonas - Guitar Solo On Acm Awards 2016-tab.xml")
+        .then(
+            function() {
+                osmd.render();
+            }
+          );
+        </script>
+
+    </body>
+</html>

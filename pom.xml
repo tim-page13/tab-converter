@@ -7,6 +7,7 @@
   <groupId>com.timpage.app</groupId>
   <artifactId>tab-converter</artifactId>
   <version>1.0-SNAPSHOT</version>
+  <packaging>war</packaging>
 
   <name>tab-converter</name>
   <!-- FIXME change it to the project's website -->
@@ -59,8 +60,6 @@
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
       <version>1.14.3</version>
-      <scope>system</scope>
-      <systemPath>/Users/timpage/Documents/Uni/Year3/project/Libraries/jsoup-1.14.3.jar</systemPath>
     </dependency>
     <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli -->
     <dependency>
@@ -68,15 +67,31 @@
       <artifactId>commons-cli</artifactId>
       <version>1.4</version>
     </dependency>
-    <!-- <dependency>
-      <groupId>dorienh</groupId>
-      <artifactId>musicxmlparser</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>/Users/timpage/Documents/Uni/Year3/project/Libraries/dorienh-musicxmlparserdh/target/dorienh-musicxmlparserdh-1.0-SNAPSHOT.jar</systemPath>
-    </dependency> -->
-
-
+    <!-- https://mvnrepository.com/artifact/commons-fileupload/commons-fileupload -->
+    <dependency>
+      <groupId>commons-fileupload</groupId>
+      <artifactId>commons-fileupload</artifactId>
+      <version>1.4</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.11.0</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>4.0.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+      <version>5.2.0</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -120,6 +135,14 @@
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.0.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>3.3.2</version>
+          <!-- <configuration>
+            <webappDirectory>/sample/servlet/container/deploy/directory</webappDirectory>
+          </configuration> -->
         </plugin>
       </plugins>
     </pluginManagement>
