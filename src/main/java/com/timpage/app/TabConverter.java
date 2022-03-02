@@ -323,10 +323,11 @@ public class TabConverter {
                         }
  
                     } //todo idea::: sort by start time using sort method from above^^
-                    // int offset = 0; // is this line in the wrong place?
+                    boolean newMeasure = false;
                     if (songPartMatrix.get(l).get(i).get(0).getMeasure() != currentMeasure) {
                         currentMeasure = songPartMatrix.get(l).get(i).get(0).getMeasure();
                         offset = 0;
+                        newMeasure = true;
                         numNotes = this.doc.select("part").get(l).getElementsByTag("measure").get((songPartMatrix.get(l).get(i).get(0).getMeasure()-1)).getElementsByTag("note").size();
                         System.out.println("resetting offset");
                     }
@@ -338,7 +339,8 @@ public class TabConverter {
                         boolean aRest = false;
                         Element thisnote = thismeasure.getElementsByTag("note").get(j);
                         // only for the first note of the bar
-                        if (offset == 0) {
+                        if (newMeasure == true) {
+                            newMeasure = false;
                             // when the "divisions" tag is present, the backup valiue needs to be recalculated because the time signature
                                 // or number of divisions per beat may have changed
                             if (!thismeasure.getElementsByTag("divisions").isEmpty()) {
@@ -352,11 +354,15 @@ public class TabConverter {
                                     System.err.println("Invalid String");
                                 }
                             }
+                            else {
+                                System.err.println("Divisions is empty");
+                            }
                             if (backupDistance != 0) {
                                 // "backup" tag to put the write the tab staff to the beginning of the bar
                                 Element backup = new Element("backup");
                                 backup.appendElement("duration").append(backupDistance+"");
                                 thismeasure.appendChild(backup);
+                                // backupDistance = 0;
                             }
                             else {
                                 System.err.println("Unable to backup");
@@ -370,17 +376,18 @@ public class TabConverter {
                                 if (thisnote.getElementsByTag("pitch").isEmpty()) {
                                     aRest = true;
                                     j--;
-                                    offset++;
                                     System.out.println("rest");
                                 }
                                 else{
                                     System.out.println("note");
                                 }
+                                offset++;
                                 aNote = true; // a note has been found in the bar
                                 break;
                             }
                             else {
                                 offset++;
+                                System.out.println("incrementing offset; note not found");
                             }
                         }
                         if (aNote) {
