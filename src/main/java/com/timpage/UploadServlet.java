@@ -4,20 +4,16 @@ package com.timpage;
 import java.io.*;
 import java.util.*;
  
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.timpage.app.App;
-import com.timpage.app.TabConverter;
 
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.io.output.*;
 
 public class UploadServlet extends HttpServlet {
    
@@ -74,10 +70,10 @@ public class UploadServlet extends HttpServlet {
 
         try { 
             // Parse the request to get file items.
-            List fileItems = upload.parseRequest(request);
+            List<FileItem> fileItems = upload.parseRequest(request);
         
             // Process the uploaded file items
-            Iterator i = fileItems.iterator();
+            Iterator<FileItem> i = fileItems.iterator();
 
             out.println("<html>");
             out.println("<head>");
@@ -89,11 +85,11 @@ public class UploadServlet extends HttpServlet {
                 FileItem fi = (FileItem)i.next();
                 if ( !fi.isFormField () ) {
                     // Get the uploaded file parameters
-                    String fieldName = fi.getFieldName();
+                    // String fieldName = fi.getFieldName();
                     String fileName = fi.getName();
-                    String contentType = fi.getContentType();
+                    // String contentType = fi.getContentType();
                     boolean isInMemory = fi.isInMemory();
-                    long sizeInBytes = fi.getSize();
+                    // long sizeInBytes = fi.getSize();
                     
                     // Write the file
                     // if( fileName.lastIndexOf("/") >= 0 ) {
@@ -101,7 +97,7 @@ public class UploadServlet extends HttpServlet {
                         // System.out.println("made new " + file.getAbsolutePath() + " " + isInMemory);
                     // } else {
                         file = new File( filePath + fileName.substring(fileName.lastIndexOf("/")+1)) ;
-                        System.out.println("made new 1 " + file.getAbsolutePath() + " " + isInMemory);
+                        System.out.println("made new " + file.getAbsolutePath() + " " + isInMemory);
                     // }
                     fi.write( file ) ;
                     out.println("Uploaded Filename: " + fileName + "<br>");
