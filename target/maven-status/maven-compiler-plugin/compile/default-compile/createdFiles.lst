@@ -49,6 +49,7 @@ com/timpage/app/TabConverter$4.class
 com/timpage/app/App.class
 com/timpage/musicXMLparserDH/spiralArray/MinorKey.class
 com/timpage/musicXMLparserDH/spiralArray/SpiralArrayObjectInterface.class
+com/timpage/app/ChordMap.class
 com/timpage/musicXMLparserDH/spiralArray/SpiralArray.class
 com/timpage/musicXMLparserDH/spiralArray/PitchInterface.class
 com/timpage/musicXMLparserDH/spiralArray/ConstantsInterface.class

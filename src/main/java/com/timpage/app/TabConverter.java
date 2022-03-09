@@ -4,24 +4,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.BufferedWriter;
 import java.io.File;
-// import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.List;
-import java.util.Objects;
-
-import javax.swing.table.TableModel;
-
-import java.nio.channels.FileChannel;
 
 import com.timpage.musicXMLparserDH.music.Note;
 import com.timpage.musicXMLparserDH.parser.musicXMLparserDH;
-import com.timpage.app.Guitar;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -36,6 +29,8 @@ public class TabConverter {
     private ArrayList<ArrayList<ArrayList<Note>>> songPartMatrix;
     private Guitar guitar;
     private String destFileName;
+    // data structure to store the possible combinations of frettings and the score 
+    Hashtable<ArrayList<Integer>, ArrayList<ChordMap>> chordMappings = new Hashtable<>();
 
 
     public TabConverter(String filename) throws IOException {
@@ -294,35 +289,37 @@ public class TabConverter {
                         return mp2-mp1;
                     }
                 });
+                // only converts to tab the lines that have notes and are not duplicates of the line before
                 if (line.size() > 0 && (i==0 || !songPartMatrix.get(l).get(i-1).equals(songPartMatrix.get(l).get(i)))) {
-                    //todo check how many notes are being played. If >6 check for duplicates, else assign the first 6
-                    //todo start by assigning highest pitch note to highest pitch string (strings may not be in pitch order if in a weird tuning). For now just go in order or strings
-                    // if any notes have already been assigned to strings, don't assign any other notes to that string
-                    boolean[] takenStrings = new boolean[guitar.getGuitarStrings().size()];
-                    for (int j=0; j<line.size(); j++) {
-                        if (line.get(j).getStringNo() != null) {
-                            takenStrings[line.get(j).getStringNo()] = true;
-                        }
-                    }
-                    for (int j=0; j<line.size(); j++) {
-                        if (line.get(j).getStringNo() == null) {
-                            boolean noteAssigned = false;
-                            int k = 0;
-                            // loop through the strings until the note is assigned a string
-                            while (noteAssigned == false && k<guitar.getGuitarStrings().size()) {
-                                // note can be played on the string and string isn't already taken
-                                if (line.get(j).getMidiPitch() >= guitar.getGuitarStrings().get(k).getOpenMidiPitch() && takenStrings[k] == false) {
-                                    line.get(j).setStringNo(k);
-                                    line.get(j).setFretNo(line.get(j).getMidiPitch() - guitar.getGuitarStrings().get(k).getOpenMidiPitch());
-                                    takenStrings[k] = true;
-                                    noteAssigned = true;
-                                    break;
-                                }
-                                k++;
-                            }
-                        }
- 
-                    } //todo idea::: sort by start time using sort method from above^^
+                    // //todo check how many notes are being played. If >6 check for duplicates, else assign the first 6
+                    // //todo start by assigning highest pitch note to highest pitch string (strings may not be in pitch order if in a weird tuning). For now just go in order or strings
+                    // // if any notes have already been assigned to strings, don't assign any other notes to that string
+                    // boolean[] takenStrings = new boolean[guitar.getGuitarStrings().size()];
+                    // for (int j=0; j<line.size(); j++) {
+                    //     if (line.get(j).getStringNo() != null) {
+                    //         takenStrings[line.get(j).getStringNo()] = true;
+                    //     }
+                    // }
+                    // for (int j=0; j<line.size(); j++) {
+                    //     if (line.get(j).getStringNo() == null) {
+                    //         boolean noteAssigned = false;
+                    //         int k = 0;
+                    //         // loop through the strings until the note is assigned a string
+                    //         while (noteAssigned == false && k<guitar.getGuitarStrings().size()) {
+                    //             // note can be played on the string and string isn't already taken
+                    //             if (line.get(j).getMidiPitch() >= guitar.getGuitarStrings().get(k).getOpenMidiPitch() && takenStrings[k] == false) {
+                    //                 line.get(j).setStringNo(k);
+                    //                 line.get(j).setFretNo(line.get(j).getMidiPitch() - guitar.getGuitarStrings().get(k).getOpenMidiPitch());
+                    //                 takenStrings[k] = true;
+                    //                 noteAssigned = true;
+                    //                 break;
+                    //             }
+                    //             k++;
+                    //         }
+                    //     }
+                    // }
+                    line = chordToTab(line);
+                    //todo idea::: sort by start time using sort method from above^^
                     boolean newMeasure = false;
                     if (songPartMatrix.get(l).get(i).get(0).getMeasure() != currentMeasure) {
                         currentMeasure = songPartMatrix.get(l).get(i).get(0).getMeasure();
@@ -339,7 +336,7 @@ public class TabConverter {
                         boolean aRest = false;
                         Element thisnote = thismeasure.getElementsByTag("note").get(j);
                         // only for the first note of the bar
-                        if (newMeasure == true) {
+                        if (newMeasure) {
                             newMeasure = false;
                             // when the "divisions" tag is present, the backup valiue needs to be recalculated because the time signature
                                 // or number of divisions per beat may have changed
@@ -368,13 +365,14 @@ public class TabConverter {
                                 System.err.println("Unable to backup");
                             }
                         }
-                        while (aNote == false && offset + j <= numNotes) {
+                        while (aNote == false && offset < numNotes) {
                             System.out.println((offset+j) + "  " + offset + " " + j + "  " + songPartMatrix.get(l).get(i).get(j).getMeasure() + "  " + numNotes);
-                            thisnote = thismeasure.getElementsByTag("note").get(offset + j);
+                            thisnote = thismeasure.getElementsByTag("note").get(offset);
                             //ignore rests (they don't have a pitch) and tab notes
                             if (thisnote.select("staff").isEmpty() || thisnote.getElementsByTag("staff").first().ownText() == "1") { 
                                 if (thisnote.getElementsByTag("pitch").isEmpty()) {
                                     aRest = true;
+                                    // because j is iterating through the concurrent notes of which a rest is not a part
                                     j--;
                                     System.out.println("rest");
                                 }
@@ -393,15 +391,6 @@ public class TabConverter {
                         if (aNote) {
                             // make a copy of the note to be the tab staff version
                             Element tabNote = thisnote.clone();
-                            // find the amount of time needed to go back to insert the tab version
-                            int durationTime = 0;
-                            try {
-                                durationTime = Integer.parseInt(tabNote.getElementsByTag("duration").first().ownText());
-                            }
-                            catch (NumberFormatException e) {
-                                // This is thrown when the staff tag doesn't contain an integer
-                                System.out.println("Invalid String");
-                            }
                             thismeasure.appendChild(tabNote);
                             Element voice = tabNote.getElementsByTag("voice").first();
                             int voiceNo = 0;
@@ -428,7 +417,11 @@ public class TabConverter {
                                 tabNote.getElementsByTag("type").last().after(staff);
                             }
                             // remove beams from tab notes
-                            tabNote.getElementsByTag("beam").empty();
+                            tabNote.getElementsByTag("beam").remove();
+                            // if there is a backup tag before the note, append it to the tab
+                            if (thisnote.elementSiblingIndex() > 0 && thisnote.previousElementSibling().tagName() == "backup") {
+                                tabNote.before(thisnote.previousElementSibling().clone());
+                            }
                             // add tags to the note if missing
                             if (!aRest) {
                                 if (tabNote.getElementsByTag("notations").isEmpty()) {
@@ -458,9 +451,122 @@ public class TabConverter {
 
         // write the changes to the file
         WriteFile();
-        // return songPartMatrix;
         return destFileName;
 
+    }
+
+    /**
+     * Converts a chord (set of concurrently played notes) to tab by assigning them all to strings and frets.
+     * @param line the set of concurrently played notes to be assigned
+     * @return the set of notes but with the string and fret assignments within the Note objects
+     */
+    private List<Note> chordToTab(List<Note> line) {
+        //todo check how many notes are being played. If >6 check for duplicates, else assign the first 6
+        
+        // perform a DFS with branch and bound to prune invalid combinations of string/fret assignments
+        // the midipitches of the notes in the chord
+        ArrayList<Integer> chordNotes = new ArrayList<>();
+        // chordMappings.put(chordNotes, new ArrayList<ChordMap>());
+        for (int j=0; j<line.size(); j++) {
+            chordNotes.add(line.get(j).getMidiPitch());
+        }
+        // if any notes have already been assigned to strings, don't assign any other notes to that string
+                // This is leftover from plans for supporting multiple voices
+        // boolean[] takenStrings = new boolean[guitar.getGuitarStrings().size()];
+        // for (int j=0; j<line.size(); j++) {
+        //     if (line.get(j).getStringNo() != null) {
+        //         takenStrings[line.get(j).getStringNo()] = true;
+        //     }
+        // }
+
+        // calculate the possible assignments if not already in the store
+        if (!chordMappings.containsKey(chordNotes)) {
+            // only if the assignment was successful
+            if (assignNote(new ChordMap(), chordNotes, new ArrayList<>())) {
+                // sort the ChordMaps by score
+                Collections.sort(chordMappings.get(chordNotes));
+            }
+            else {
+                System.out.println("Failed to convert chord to tab");
+            }
+        }
+
+        // assigns the best scoring ChordMap from chordMappings to the notes in the line
+        Enumeration<Integer> assignments = chordMappings.get(chordNotes).get(0).getFretting().keys();
+        int j=0;
+        while (assignments.hasMoreElements()) {
+            int string = assignments.nextElement();
+            int fret = chordMappings.get(chordNotes).get(0).getFretting().get(string);
+            line.get(j).setStringNo(string);
+            line.get(j).setFretNo(fret);
+            j++;
+        }
+        return line;
+    }
+
+    /**
+     * Recursive function to assign a Note to a string and fret to be played. 
+     * A DFS with branch & bound is performed to get all useful combinations.
+     * @param cm the ChordMap which contains the current frettings and the score of the assignment
+     * @param chordNotes the midipitches of the notes in the chord
+     * @param assignedNotes the midipitches of the notes that have been assigned to strings
+     * @return the boolean of whether the note assignment has been successful or not.
+     */
+    private boolean assignNote(ChordMap cm, ArrayList<Integer> chordNotes, ArrayList<Integer> assignedNotes) {
+        boolean successfulAssignment = false;
+        // recursion base case: all notes assigned a string&fret
+        if (cm.size() == chordNotes.size()) {
+            ArrayList<ChordMap> cmArray;
+            if (!chordMappings.containsKey(chordNotes)) {
+                cmArray = new ArrayList<>();
+            }
+            else {
+                cmArray = chordMappings.get(chordNotes);
+                // check the assignment is not a duplicate
+                for (ChordMap storedCM : cmArray) {
+                    // don't add the assignment to the store unless it is new
+                    if (storedCM.getFretting().equals(cm.getFretting())) {
+                        return true;
+                    }
+                }
+                chordMappings.remove(chordNotes);
+            }
+            cmArray.add(cm);
+            chordMappings.put(chordNotes, cmArray);
+            // calculate the score of the ChordMap
+            cm.calculateScore();
+            return true;
+        }
+        // loop through the notes to be assigned
+        for (int j=0; j<chordNotes.size(); j++) {
+            // prune the path where the note has already been assigned
+            if (!assignedNotes.contains(j)) {
+                // loop through the strings until the note is assigned a string
+                for (int k=0; k<guitar.getGuitarStrings().size(); k++) {
+                    boolean noteAssigned = false;
+                    // prune paths where you are adding a fret out of reach or where fret number is out of range
+                    int fret = chordNotes.get(j) - guitar.getGuitarStrings().get(k).getOpenMidiPitch();
+                    // Prune the path where a note would be assigned to an invalid string (either because it is not possible or the string is already taken)
+                    if (fret >= 0 && fret <= 24 && !cm.isStringTaken(k)) {
+                        // deep copy of the chordmap to be modified and passed into the recursive function
+                        ChordMap cmCopy = new ChordMap(cm);
+                        noteAssigned = cmCopy.addFretting(k, fret);
+                        // when there is an assignment for all notes
+                        if (noteAssigned) {
+                            // deep copy of the assigned notes to be modified and passed into the recursive function
+                            ArrayList<Integer> assignedNotesCopy = new ArrayList<>();
+                            assignedNotesCopy.addAll(assignedNotes);
+                            assignedNotesCopy.add(j);
+                            if (assignNote(cmCopy, chordNotes, assignedNotesCopy)) {
+                                successfulAssignment = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // if there is at least one possible assignment the overall function returns true
+        return successfulAssignment;
     }
 
 }
