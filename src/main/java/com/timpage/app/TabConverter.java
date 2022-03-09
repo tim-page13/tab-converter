@@ -25,21 +25,23 @@ public class TabConverter {
     
     public org.jsoup.nodes.Document doc;
     private musicXMLparserDH parser;
-    private ArrayList<ArrayList<Note>> songMatrix;
     private ArrayList<ArrayList<ArrayList<Note>>> songPartMatrix;
     private Guitar guitar;
     private String destFileName;
     // data structure to store the possible combinations of frettings and the score 
-    Hashtable<ArrayList<Integer>, ArrayList<ChordMap>> chordMappings = new Hashtable<>();
+    private Hashtable<ArrayList<Integer>, ArrayList<ChordMap>> chordMappings = new Hashtable<>();
 
 
+    /**
+     * Constructor for the TabConverter object
+     * Handles the parsing of the given file in preparation of its conversion to tab
+     * @param filename the name of the file to be converted to tab
+     * @throws IOException if the input file cannot be read
+     */
     public TabConverter(String filename) throws IOException {
         try {
-            System.out.println("1" + filename);
             parser = new musicXMLparserDH(filename);
-            // parser = new musicXMLparserDH(filename);
             parser.parseMusicXML();
-            songMatrix = parser.getSongMatrix();
             songPartMatrix = parser.getSongPartMatrix();
             guitar = new Guitar();
             if (filename.contains(".xml")) {
@@ -55,9 +57,6 @@ public class TabConverter {
             else {
                 destFileName = filename + "-tab";
             }
-            System.out.println("2" + destFileName);
-            // DuplicateFile(filename);
-
             InputStream is = new FileInputStream(filename) {
                 @Override
                 public int read() throws IOException {
@@ -67,7 +66,6 @@ public class TabConverter {
             doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
             if (doc.getElementsByTag("note").isEmpty()) {
                 doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
-    //            doc = Jsoup.parse(input, "UTF-16", filename);
                 if (doc.getElementsByTag("note").isEmpty()) {
                     System.out.println("Please check that your file is encoded in UTF-8 or UTF-16 and contains notes.");
                 }
@@ -79,14 +77,17 @@ public class TabConverter {
              
     }
 
+    /**
+     * Constructor for the TabConverter object
+     * Handles the parsing of the given file in preparation of its conversion to tab
+     * @param file the file to be converted to tab
+     * @throws IOException if the input file cannot be read
+     */
     public TabConverter(File file) throws IOException {
-        System.out.println("input file name: " + file.getName());
-
         try {
             String filename = file.getName();
             parser = new musicXMLparserDH(file);
             parser.parseMusicXML();
-            songMatrix = parser.getSongMatrix();
             songPartMatrix = parser.getSongPartMatrix();
             guitar = new Guitar();
             if (!filename.contains(".xml") && !filename.contains(".musicxml")) {
@@ -96,8 +97,6 @@ public class TabConverter {
             String startString = filename.substring(0, end);
             String endString = filename.substring(end);
             destFileName = "../webapps/data/" + startString + "-tab" + endString;
-            System.out.println("destFileName: " + destFileName);
-            // DuplicateFile(filename);
 
             InputStream is = new FileInputStream(file) {
                 @Override
@@ -108,7 +107,6 @@ public class TabConverter {
             doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
             if (doc.getElementsByTag("note").isEmpty()) {
                 doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
-    //            doc = Jsoup.parse(input, "UTF-16", filename);
                 if (doc.getElementsByTag("note").isEmpty()) {
                     System.out.println("Please check that your file is encoded in UTF-8 or UTF-16 and contains notes.");
                 }
@@ -122,6 +120,9 @@ public class TabConverter {
              
     }
 
+    /**
+     * Used to write the document with tab included to permanent file storage
+     */
     private void WriteFile() {
         BufferedWriter  writer = null;
         try {
@@ -135,64 +136,10 @@ public class TabConverter {
         }
     }
 
-    public ArrayList<ArrayList<Note>> convertToTab() {
-        for (int i=0; i<songMatrix.size(); i++) {
-            List<Note> line = songMatrix.get(i);
-            Collections.sort(line, new Comparator<Note>() {
-                @Override
-                public int compare(Note n1, Note n2) {
-                    int mp1 = n1.getMidiPitch();
-                    int mp2 = n2.getMidiPitch();
-                    // sort in descending order
-                    return mp2-mp1;
-                }
-            });
-            if (line.size() > 0 && (i==0 || !songMatrix.get(i-1).equals(songMatrix.get(i)))) {
-                //todo check how many notes are being played. If >6 check for duplicates, else assign the first 6
-                //todo start by assigning highest pitch note to highest pitch string (strings may not be in pitch order if in a weird tuning). For now just go in order or strings
-                System.out.printf("bar %d:  ", line.get(0).getMeasure());
-                // if any notes have already been assigned to strings, don't assign any other notes to that string
-                boolean[] takenStrings = new boolean[guitar.getGuitarStrings().size()];
-                for (int j=0; j<line.size(); j++) {
-                    if (line.get(j).getStringNo() != null) {
-                        takenStrings[line.get(j).getStringNo()] = true;
-                    }
-                }
-                for (int j=0; j<line.size(); j++) {
-                    if (line.get(j).getStringNo() == null) {
-                        boolean noteAssigned = false;
-                        int k = 0;
-                        // loop through the strings until the note is assigned a string
-                        while (noteAssigned == false && k<guitar.getGuitarStrings().size()) {
-                            // note can be played on the string and string isn't already taken
-                            if (line.get(j).getMidiPitch() >= guitar.getGuitarStrings().get(k).getOpenMidiPitch() && takenStrings[k] == false) {
-                                line.get(j).setStringNo(k);
-                                line.get(j).setFretNo(line.get(j).getMidiPitch() - guitar.getGuitarStrings().get(k).getOpenMidiPitch());
-                                takenStrings[k] = true;
-                                noteAssigned = true;
-                                break;
-                            }
-                            k++;
-                        }
-                    }
-
-                    try {
-                        System.out.printf("%s%d%s ", line.get(j).getPitch(), line.get(j).getOctave(), line.get(j).getAccidental());
-                        System.out.printf("string: %d fret: %d ", (line.get(j).getStringNo()+1), line.get(j).getFretNo());
-                    } catch (Exception e) {
-                        System.out.println("note couldn't be assigned. There might be too many notes");
-                    }
-
-                }
-                System.out.println();
-            }
-            
-            
-        }        
-
-        return songMatrix;
-
-    }
+    /**
+     * Iterates through each part in the score and converts the sheet music to guitar tab
+     * @return the filename of the score with the generated tab in it
+     */
     public String convertPartsToTab() {
         int offset = 0;
         int numNotes = 0;
@@ -210,7 +157,7 @@ public class TabConverter {
                 }
                 catch (NumberFormatException e) {
                     // This is thrown when the staves tag doesn't contain an integer
-                    System.out.println("Invalid String");
+                    System.out.println("Invalid String: staves tag doesn't contain an integer");
                 }
             }
             // add xml tags for the TAB clef and stave information
@@ -231,7 +178,7 @@ public class TabConverter {
                     }
                     catch (NumberFormatException e) {
                         // This is thrown when the staves tag doesn't contain an integer
-                        System.out.println("Invalid String");
+                        System.out.println("Invalid String: staves tag doesn't contain an integer");
                     }
                     staves.text(""+(staveCount+1));
                 }
@@ -291,33 +238,7 @@ public class TabConverter {
                 });
                 // only converts to tab the lines that have notes and are not duplicates of the line before
                 if (line.size() > 0 && (i==0 || !songPartMatrix.get(l).get(i-1).equals(songPartMatrix.get(l).get(i)))) {
-                    // //todo check how many notes are being played. If >6 check for duplicates, else assign the first 6
-                    // //todo start by assigning highest pitch note to highest pitch string (strings may not be in pitch order if in a weird tuning). For now just go in order or strings
-                    // // if any notes have already been assigned to strings, don't assign any other notes to that string
-                    // boolean[] takenStrings = new boolean[guitar.getGuitarStrings().size()];
-                    // for (int j=0; j<line.size(); j++) {
-                    //     if (line.get(j).getStringNo() != null) {
-                    //         takenStrings[line.get(j).getStringNo()] = true;
-                    //     }
-                    // }
-                    // for (int j=0; j<line.size(); j++) {
-                    //     if (line.get(j).getStringNo() == null) {
-                    //         boolean noteAssigned = false;
-                    //         int k = 0;
-                    //         // loop through the strings until the note is assigned a string
-                    //         while (noteAssigned == false && k<guitar.getGuitarStrings().size()) {
-                    //             // note can be played on the string and string isn't already taken
-                    //             if (line.get(j).getMidiPitch() >= guitar.getGuitarStrings().get(k).getOpenMidiPitch() && takenStrings[k] == false) {
-                    //                 line.get(j).setStringNo(k);
-                    //                 line.get(j).setFretNo(line.get(j).getMidiPitch() - guitar.getGuitarStrings().get(k).getOpenMidiPitch());
-                    //                 takenStrings[k] = true;
-                    //                 noteAssigned = true;
-                    //                 break;
-                    //             }
-                    //             k++;
-                    //         }
-                    //     }
-                    // }
+                    // convert the current line of concurrent notes (i.e. a chord) to tab
                     line = chordToTab(line);
                     //todo idea::: sort by start time using sort method from above^^
                     boolean newMeasure = false;

@@ -45,7 +45,6 @@ com/timpage/musicXMLparserDH/Note.class
 com/timpage/musicXMLparserDH/featureX/musicXMLparserDH$1.class
 com/timpage/musicXMLparserDH/spiralArray/Chord.class
 com/timpage/musicXMLparserDH/spiralArray/MinorTriadInterface.class
-com/timpage/app/TabConverter$4.class
 com/timpage/app/App.class
 com/timpage/musicXMLparserDH/spiralArray/MinorKey.class
 com/timpage/musicXMLparserDH/spiralArray/SpiralArrayObjectInterface.class
