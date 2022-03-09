@@ -1,7 +1,5 @@
 package com.timpage.app;
 
-import java.util.HashMap;
-
 /**
  * Guitar String class to give the properties of the guitar string
  */
@@ -12,8 +10,6 @@ public class GuitarString {
     private String openPitch;
     private int openOctave;
     private int openAccidental;
-    //todo use this as <position in piece, fret>?
-    private HashMap<Integer, Integer> stringAssignments;
 
     /**
      * Constructor to set a new guitar string with a specified midi pitch
