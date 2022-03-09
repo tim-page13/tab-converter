@@ -10,7 +10,6 @@ com/timpage/musicXMLparserDH/spiralArray/MajorKey.class
 com/timpage/musicXMLparserDH/spiralArray/TriadInterface.class
 com/timpage/musicXMLparserDH/music/ftpUploader.class
 com/timpage/musicXMLparserDH/spiralArray/KeySeg.class
-com/timpage/app/TabConverter$3.class
 com/timpage/musicXMLparserDH/music/Fragment.class
 com/timpage/musicXMLparserDH/musicXMLparserDHrun.class
 com/timpage/Servlet.class
@@ -26,6 +25,7 @@ com/timpage/musicXMLparserDH/spiralArray/KeyFinder.class
 com/timpage/musicXMLparserDH/spiralArray/ParameterInterface.class
 com/timpage/app/Guitar.class
 com/timpage/musicXMLparserDH/music/Speller.class
+com/timpage/app/Tab.class
 com/timpage/musicXMLparserDH/spiralArray/MajorTriadInterface.class
 com/timpage/app/TabConverter$1.class
 com/timpage/musicXMLparserDH/music/Type.class

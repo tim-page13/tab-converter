@@ -8,7 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+// import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
@@ -224,23 +224,21 @@ public class TabConverter {
 
             // iterate through each slice
             System.out.println("songPartMatrix.get(" + l + ").size(): " + songPartMatrix.get(l).size());
+            
             for (int i=0; i<songPartMatrix.get(l).size(); i++) {
-                // sort the notes in the time slice in descending midi pitch order
-                List<Note> line = songPartMatrix.get(l).get(i);
-                Collections.sort(line, new Comparator<Note>() {
-                    @Override
-                    public int compare(Note n1, Note n2) {
-                        int mp1 = n1.getMidiPitch();
-                        int mp2 = n2.getMidiPitch();
-                        // sort in descending order
-                        return mp2-mp1;
-                    }
-                });
-                // only converts to tab the lines that have notes and are not duplicates of the line before
-                if (line.size() > 0 && (i==0 || !songPartMatrix.get(l).get(i-1).equals(songPartMatrix.get(l).get(i)))) {
+                // removes duplicate lines
+                if (i > 0 && songPartMatrix.get(l).get(i).size() > 0 && songPartMatrix.get(l).get(i-1).equals(songPartMatrix.get(l).get(i))) {
+                    songPartMatrix.get(l).remove(i);
+                    i--;
+                }
+                else if (songPartMatrix.get(l).get(i).size() > 0) {
                     // convert the current line of concurrent notes (i.e. a chord) to tab
-                    line = chordToTab(line);
-                    //todo idea::: sort by start time using sort method from above^^
+                    chordToTab(songPartMatrix.get(l).get(i));
+                }
+            }
+            for (int i=0; i<songPartMatrix.get(l).size(); i++) {
+                List<Note> line = songPartMatrix.get(l).get(i);
+                if (line.size() > 0) {
                     boolean newMeasure = false;
                     if (songPartMatrix.get(l).get(i).get(0).getMeasure() != currentMeasure) {
                         currentMeasure = songPartMatrix.get(l).get(i).get(0).getMeasure();
