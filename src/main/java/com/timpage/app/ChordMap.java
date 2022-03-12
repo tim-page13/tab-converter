@@ -12,6 +12,7 @@ public class ChordMap implements Comparable<ChordMap> {
     private Hashtable<Integer, Integer> frettings;
     // lower score is better
     private float score;
+    private float averageFret;
     
     /**
      * Constructor for the ChordMap object
@@ -103,7 +104,6 @@ public class ChordMap implements Comparable<ChordMap> {
      * @return the calculated score
      */
     public float calculateScore() {
-        // todo add a penalty for skipping strings
         int min = -1;
         int max = -1;
         Set<Integer> fretsUsed = new LinkedHashSet<Integer>();
@@ -135,11 +135,18 @@ public class ChordMap implements Comparable<ChordMap> {
         }
         int range = max-min;
         int numFretsUsed = fretsUsed.size();
-        float neckPenalty = (float) Math.sqrt((double) cumulativeFrets/(double)numFretsUsed);
+        if (cumulativeFrets > 0) {
+            averageFret = cumulativeFrets/(float)numFretsUsed;
+        }
+        float neckPenalty = (float) Math.sqrt((double) averageFret);
         skippedStrings = skippedStrings/2;
 
         score = range + numFretsUsed + neckPenalty + skippedStrings;
         return score;
+    }
+
+    public float getAverageFret() {
+        return averageFret;
     }
 
     /**

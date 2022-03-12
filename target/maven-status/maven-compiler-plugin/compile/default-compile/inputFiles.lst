@@ -27,7 +27,6 @@
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/Segmenter.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/featureX/sliceTM.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/Auxiliaries.java
-/Users/timpage/project/tab-converter/src/main/java/com/timpage/app/Tab.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/MinorKey.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/music/Type.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/Chord.java
@@ -36,6 +35,7 @@
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/MajorKey.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/MajorKeyInterface.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/KeySearch.java
+/Users/timpage/project/tab-converter/src/main/java/com/timpage/app/Transition.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/KeySeg.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/musicXMLparserDH/spiralArray/SpiralArrayObject.java
 /Users/timpage/project/tab-converter/src/main/java/com/timpage/app/ChordMap.java

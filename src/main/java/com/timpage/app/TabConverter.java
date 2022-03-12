@@ -19,6 +19,9 @@ import com.timpage.musicXMLparserDH.parser.musicXMLparserDH;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
+import org.apache.poi.poifs.crypt.DataSpaceMapUtils.TransformInfoHeader;
+import org.javatuples.Pair;
+import org.javatuples.Triplet;
 
 
 public class TabConverter {
@@ -30,6 +33,8 @@ public class TabConverter {
     private String destFileName;
     // data structure to store the possible combinations of frettings and the score 
     private Hashtable<ArrayList<Integer>, ArrayList<ChordMap>> chordMappings = new Hashtable<>();
+    private ArrayList<ChordMap> bestPath;
+    private float currentBest;
 
 
     /**
@@ -236,6 +241,9 @@ public class TabConverter {
                     chordToTab(songPartMatrix.get(l).get(i));
                 }
             }
+
+            calculateBestTransitions(songPartMatrix.get(l));
+
             for (int i=0; i<songPartMatrix.get(l).size(); i++) {
                 List<Note> line = songPartMatrix.get(l).get(i);
                 if (line.size() > 0) {
@@ -376,25 +384,24 @@ public class TabConverter {
 
     /**
      * Converts a chord (set of concurrently played notes) to tab by assigning them all to strings and frets.
-     * @param line the set of concurrently played notes to be assigned
+     * @param chord the set of concurrently played notes to be assigned
      * @return the set of notes but with the string and fret assignments within the Note objects
      */
-    private List<Note> chordToTab(List<Note> line) {
+    private List<Note> chordToTab(List<Note> chord) {
         //todo check how many notes are being played. If >6 check for duplicates, else assign the first 6
         
         // perform a DFS with branch and bound to prune invalid combinations of string/fret assignments
         // the midipitches of the notes in the chord
         ArrayList<Integer> chordNotes = new ArrayList<>();
-        // chordMappings.put(chordNotes, new ArrayList<ChordMap>());
-        for (int j=0; j<line.size(); j++) {
-            chordNotes.add(line.get(j).getMidiPitch());
+        for (int j=0; j<chord.size(); j++) {
+            chordNotes.add(chord.get(j).getMidiPitch());
         }
         // if any notes have already been assigned to strings, don't assign any other notes to that string
                 // This is leftover from plans for supporting multiple voices
         // boolean[] takenStrings = new boolean[guitar.getGuitarStrings().size()];
-        // for (int j=0; j<line.size(); j++) {
-        //     if (line.get(j).getStringNo() != null) {
-        //         takenStrings[line.get(j).getStringNo()] = true;
+        // for (int j=0; j<chord.size(); j++) {
+        //     if (chord.get(j).getStringNo() != null) {
+        //         takenStrings[chord.get(j).getStringNo()] = true;
         //     }
         // }
 
@@ -410,17 +417,17 @@ public class TabConverter {
             }
         }
 
-        // assigns the best scoring ChordMap from chordMappings to the notes in the line
+        // assigns the best scoring ChordMap from chordMappings to the notes in the chord
         Enumeration<Integer> assignments = chordMappings.get(chordNotes).get(0).getFretting().keys();
         int j=0;
         while (assignments.hasMoreElements()) {
             int string = assignments.nextElement();
             int fret = chordMappings.get(chordNotes).get(0).getFretting().get(string);
-            line.get(j).setStringNo(string);
-            line.get(j).setFretNo(fret);
+            chord.get(j).setStringNo(string);
+            chord.get(j).setFretNo(fret);
             j++;
         }
-        return line;
+        return chord;
     }
 
     /**
@@ -487,5 +494,155 @@ public class TabConverter {
         // if there is at least one possible assignment the overall function returns true
         return successfulAssignment;
     }
+
+    /**
+     * Method to calculate the best path of chord assignments taking into consideration the individual chord 
+     * fretting scores and the transition scores.
+     * @param smPart The instrument part to be converted to tab
+     * @return the boolean value of whether the path search was successful or not
+     */
+    public boolean calculateBestTransitions(ArrayList<ArrayList<Note>> smPart) {
+        Hashtable<Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap>, ArrayList<Transition>> allTransitions = new Hashtable<>();
+        for (int i=0; i<smPart.size(); i++) {
+            // skip the first chord and rests
+            if (i == 0 || smPart.get(i-1).size() == 0) {
+                continue;
+            }
+            else if (smPart.get(i).size() == 0) {
+                i++;
+                continue;
+            }
+            ArrayList<Note> chord1 = smPart.get(i-1);
+            ArrayList<Note> chord2 = smPart.get(i);
+            // the midipitches of the notes in the chords
+            ArrayList<Integer> chord1MidiNotes = new ArrayList<>();
+            ArrayList<Integer> chord2MidiNotes = new ArrayList<>();
+            for (int j=0; j<chord1.size(); j++) {
+                chord1MidiNotes.add(chord1.get(j).getMidiPitch());
+            }
+            for (int j=0; j<chord2.size(); j++) {
+                chord2MidiNotes.add(chord2.get(j).getMidiPitch());
+            }
+            ArrayList<ChordMap> chord1Maps = chordMappings.get(chord1MidiNotes);
+            ArrayList<ChordMap> chord2Maps = chordMappings.get(chord2MidiNotes);
+            for (ChordMap c1Map : chord1Maps) {
+                Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap> key = new Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap>(chord1MidiNotes, chord2MidiNotes, c1Map);
+                // store already contains the transition scores for these two chords
+                if (allTransitions.contains(key)) {
+                    break;
+                }
+                ArrayList<Transition> possibleTransitions = new ArrayList<>();
+                for (ChordMap c2Map : chord2Maps) {
+                    Transition transition = new Transition(c2Map);
+                    transition.calculateTransitionScore(c1Map);
+                    possibleTransitions.add(transition);
+                }
+                Collections.sort(possibleTransitions);
+                allTransitions.put(key, possibleTransitions);
+            }
+        }
+        ArrayList<ArrayList<Note>> section = new ArrayList<>();
+        bestPath = new ArrayList<>();
+        for (int i=0; i<=smPart.size(); i++) {
+            if (i == smPart.size() || (smPart.get(i).size() == 0 && !section.isEmpty())) {
+                currentBest = -1;
+                ArrayList<ChordMap> sectionPath = addToPath(allTransitions, section, new ArrayList<ChordMap>(), 1, (float) 0);
+                bestPath.addAll(sectionPath);
+                section.clear();
+            }
+            else if (smPart.get(i).size() > 0) {
+                section.add(smPart.get(i));
+            }
+
+        }
+        System.out.println("finished calculating path");
+        return true;
+    }
+
+    /**
+     * Recursive function which adds a chord transition to the path. 
+     * DFS to find the best combination of chords based on individual chord fretting scores and transition scores.
+     * @param allTransitions Hashtable with all the transitions possible from one chord mapping to another chord
+     * @param smPart the section of the instrumental part for which the best tab mapping is being found
+     * @param path the current path of frettings being searched currently
+     * @param i counter to iterate through smPart
+     * @param pathScore the score of the current path being explored
+     * @return the best path of chordMap assignments found
+     */
+    private ArrayList<ChordMap> addToPath(Hashtable<Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap>, ArrayList<Transition>> allTransitions, ArrayList<ArrayList<Note>> smPart, ArrayList<ChordMap> path, int i, float pathScore) {
+        // path to be returned
+        ArrayList<ChordMap> bestPathSection = null;
+        // recursive base case
+        if (i >= smPart.size() && (i != 1 || smPart.isEmpty())) {
+            currentBest = pathScore;
+            return path;
+        }
+        ArrayList<Note> chord1 = smPart.get(i-1);
+        // the midipitches of the notes in the chords
+        ArrayList<Integer> chord1MidiNotes = new ArrayList<>();
+        ArrayList<Integer> chord2MidiNotes = new ArrayList<>();
+        for (int j=0; j<chord1.size(); j++) {
+            chord1MidiNotes.add(chord1.get(j).getMidiPitch());
+        }
+        if (smPart.size() > 1) {
+            ArrayList<Note> chord2 = smPart.get(i);
+            for (int j=0; j<chord2.size(); j++) {
+                chord2MidiNotes.add(chord2.get(j).getMidiPitch());
+            }
+        }
+        // case of first chord in sequence 
+        if (i == 1) {
+            ArrayList<ChordMap> chord1Maps = chordMappings.get(chord1MidiNotes);
+            for (ChordMap c1Map : chord1Maps) {
+                // if there is only one chord in the section return the best scoring chord
+                if (i >= smPart.size()) {
+                    path.add(c1Map);
+                    return path;
+                }
+                Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap> key = new Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap>(chord1MidiNotes, chord2MidiNotes, c1Map);
+                ArrayList<Transition> transitions = allTransitions.get(key);
+                for (Transition transition: transitions) {
+                    ArrayList<ChordMap> newPath = new ArrayList<>();
+                    newPath.add(c1Map);
+                    newPath.addAll(path);
+                    newPath.add(transition.getDstMap());
+                    float newScore = pathScore+c1Map.getScore()+transition.getTransitionScore();
+                    // prune paths that would only lead to a worse score than the current best
+                    if (currentBest == -1 || newScore < currentBest) {
+                        i++;
+                        ArrayList<ChordMap> result = addToPath(allTransitions, smPart, newPath, i, newScore);
+                        if (result != null) {
+                            bestPathSection = result;
+                        }
+                        i--;
+                    }
+                    else break;
+                } 
+            }
+        }
+        else {
+            ChordMap c1Map = path.get(path.size()-1);
+            Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap> key = new Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap>(chord1MidiNotes, chord2MidiNotes, c1Map);
+            ArrayList<Transition> transitions = allTransitions.get(key);
+            for (Transition transition: transitions) {
+                ArrayList<ChordMap> newPath = new ArrayList<>();
+                newPath.addAll(path);
+                newPath.add(transition.getDstMap());
+                float newScore = pathScore+transition.getTransitionScore();
+                // prune paths that would only lead to a worse score than the current best
+                if (currentBest == -1 || newScore < currentBest) {
+                    i++;
+                    ArrayList<ChordMap> result = addToPath(allTransitions, smPart, newPath, i, newScore);
+                    if (result != null) {
+                        bestPathSection = result;
+                    }
+                    i--;
+                }
+                else break;
+            } 
+        }
+        return bestPathSection;
+    }
+
 
 }
