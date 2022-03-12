@@ -231,8 +231,8 @@ public class TabConverter {
             System.out.println("songPartMatrix.get(" + l + ").size(): " + songPartMatrix.get(l).size());
             
             for (int i=0; i<songPartMatrix.get(l).size(); i++) {
-                // removes duplicate lines
-                if (i > 0 && songPartMatrix.get(l).get(i).size() > 0 && songPartMatrix.get(l).get(i-1).equals(songPartMatrix.get(l).get(i))) {
+                // removes duplicate lines 
+                if (i > 0 && songPartMatrix.get(l).get(i-1).equals(songPartMatrix.get(l).get(i))) {
                     songPartMatrix.get(l).remove(i);
                     i--;
                 }
@@ -242,7 +242,25 @@ public class TabConverter {
                 }
             }
 
+            // determine best tab assignment 
             calculateBestTransitions(songPartMatrix.get(l));
+
+            // write the string/fret assignments to the Note objects
+            for (int i=0; i<songPartMatrix.get(l).size(); i++) {
+                // remove rests from the matrix
+                if (songPartMatrix.get(l).get(i).size() == 0) {
+                    songPartMatrix.get(l).remove(i);
+                    i--;
+                }
+                else {
+                    Enumeration<Integer> strings = bestPath.get(i).getFretting().keys();
+                    for (int j=0; j<songPartMatrix.get(l).get(i).size(); j++) {
+                        int string = strings.nextElement();
+                        songPartMatrix.get(l).get(i).get(j).setStringNo(string);
+                        songPartMatrix.get(l).get(i).get(j).setFretNo(bestPath.get(i).getFretting().get(string));
+                    }
+                }
+            }
 
             for (int i=0; i<songPartMatrix.get(l).size(); i++) {
                 List<Note> line = songPartMatrix.get(l).get(i);
@@ -417,16 +435,6 @@ public class TabConverter {
             }
         }
 
-        // assigns the best scoring ChordMap from chordMappings to the notes in the chord
-        Enumeration<Integer> assignments = chordMappings.get(chordNotes).get(0).getFretting().keys();
-        int j=0;
-        while (assignments.hasMoreElements()) {
-            int string = assignments.nextElement();
-            int fret = chordMappings.get(chordNotes).get(0).getFretting().get(string);
-            chord.get(j).setStringNo(string);
-            chord.get(j).setFretNo(fret);
-            j++;
-        }
         return chord;
     }
 
@@ -555,7 +563,6 @@ public class TabConverter {
             }
 
         }
-        System.out.println("finished calculating path");
         return true;
     }
 
