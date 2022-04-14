@@ -8,7 +8,6 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-// import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
@@ -19,8 +18,6 @@ import com.timpage.musicXMLparserDH.parser.musicXMLparserDH;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
-import org.apache.poi.poifs.crypt.DataSpaceMapUtils.TransformInfoHeader;
-import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 
@@ -35,6 +32,7 @@ public class TabConverter {
     private Hashtable<ArrayList<Integer>, ArrayList<ChordMap>> chordMappings = new Hashtable<>();
     private ArrayList<ChordMap> bestPath;
     private float currentBest;
+    private int searchLimit;
 
 
     /**
@@ -146,12 +144,14 @@ public class TabConverter {
      * @return the filename of the score with the generated tab in it
      */
     public String convertPartsToTab() {
-        int offset = 0;
-        int numNotes = 0;
-        int currentMeasure = 0;
         // iterate through each part
         for (int l=0; l<songPartMatrix.size(); l++) {
+            int offset = 0;
+            int numNotes = 0;
+            int currentMeasure = 0;
             int backupDistance = 0;
+            int divisions = 0;
+            int beats = 0;
             int numVoices = 0;
             for (Element voice: this.doc.select("part").get(l).getElementsByTag("voice")) {
                 try {
@@ -228,7 +228,7 @@ public class TabConverter {
             }
 
             // iterate through each slice
-            System.out.println("songPartMatrix.get(" + l + ").size(): " + songPartMatrix.get(l).size());
+            // System.out.println("songPartMatrix.get(" + l + ").size(): " + songPartMatrix.get(l).size());
             
             for (int i=0; i<songPartMatrix.get(l).size(); i++) {
                 // removes duplicate lines 
@@ -263,130 +263,141 @@ public class TabConverter {
             }
 
             for (int i=0; i<songPartMatrix.get(l).size(); i++) {
-                List<Note> line = songPartMatrix.get(l).get(i);
-                if (line.size() > 0) {
-                    boolean newMeasure = false;
-                    if (songPartMatrix.get(l).get(i).get(0).getMeasure() != currentMeasure) {
-                        currentMeasure = songPartMatrix.get(l).get(i).get(0).getMeasure();
-                        offset = 0;
-                        newMeasure = true;
-                        numNotes = this.doc.select("part").get(l).getElementsByTag("measure").get((songPartMatrix.get(l).get(i).get(0).getMeasure()-1)).getElementsByTag("note").size();
-                        System.out.println("resetting offset");
-                    }
-                    // once all string/fret assignments are made, write them to the file
-                    for (int j=0; j<songPartMatrix.get(l).get(i).size(); j++) {
-                        // gets the right note within the measure using the unsorted matrix
-                        Element thismeasure = this.doc.select("part").get(l).getElementsByTag("measure").get((songPartMatrix.get(l).get(i).get(j).getMeasure()-1));
-                        boolean aNote = false;
-                        boolean aRest = false;
-                        Element thisnote = thismeasure.getElementsByTag("note").get(j);
-                        // only for the first note of the bar
-                        if (newMeasure) {
-                            newMeasure = false;
-                            // when the "divisions" tag is present, the backup valiue needs to be recalculated because the time signature
-                                // or number of divisions per beat may have changed
-                            if (!thismeasure.getElementsByTag("divisions").isEmpty()) {
-                                try {
-                                    int divisions = Integer.parseInt(thismeasure.getElementsByTag("divisions").first().ownText());
-                                    int beats = Integer.parseInt(thismeasure.getElementsByTag("beats").first().ownText());
-                                    backupDistance = divisions * beats;
-                                }
-                                catch (NumberFormatException e) {
-                                    // This is thrown when the divisions or beats tags don't contain an integer
-                                    System.err.println("Invalid String");
-                                }
-                            }
-                            else {
-                                System.err.println("Divisions is empty");
-                            }
-                            if (backupDistance != 0) {
-                                // "backup" tag to put the write the tab staff to the beginning of the bar
-                                Element backup = new Element("backup");
-                                backup.appendElement("duration").append(backupDistance+"");
-                                thismeasure.appendChild(backup);
-                                // backupDistance = 0;
-                            }
-                            else {
-                                System.err.println("Unable to backup");
-                            }
-                        }
-                        while (aNote == false && offset < numNotes) {
-                            System.out.println((offset+j) + "  " + offset + " " + j + "  " + songPartMatrix.get(l).get(i).get(j).getMeasure() + "  " + numNotes);
-                            thisnote = thismeasure.getElementsByTag("note").get(offset);
-                            //ignore rests (they don't have a pitch) and tab notes
-                            if (thisnote.select("staff").isEmpty() || thisnote.getElementsByTag("staff").first().ownText() == "1") { 
-                                if (thisnote.getElementsByTag("pitch").isEmpty()) {
-                                    aRest = true;
-                                    // because j is iterating through the concurrent notes of which a rest is not a part
-                                    j--;
-                                    System.out.println("rest");
-                                }
-                                else{
-                                    System.out.println("note");
-                                }
-                                offset++;
-                                aNote = true; // a note has been found in the bar
-                                break;
-                            }
-                            else {
-                                offset++;
-                                System.out.println("incrementing offset; note not found");
-                            }
-                        }
-                        if (aNote) {
-                            // make a copy of the note to be the tab staff version
-                            Element tabNote = thisnote.clone();
-                            thismeasure.appendChild(tabNote);
-                            Element voice = tabNote.getElementsByTag("voice").first();
-                            int voiceNo = 0;
+                int newMeasureNo = songPartMatrix.get(l).get(i).get(0).getMeasure();
+                Element thismeasure = this.doc.select("part").get(l).getElementsByTag("measure").get((newMeasureNo-1));
+                // if it is a new bar
+                if (newMeasureNo != currentMeasure) {
+                    offset = 0;
+                    numNotes = this.doc.select("part").get(l).getElementsByTag("measure").get((newMeasureNo-1)).getElementsByTag("note").size();
+                    // work through measures backwards from newMeasureNo to currentMeasure to scan for divisions or beats tags to recalculate backupDistance
+                    boolean changeDivision = false;
+                    boolean changeBeats = false;
+                    for (int j=newMeasureNo; j>currentMeasure; j--) {
+                        Element tempMeasure = this.doc.select("part").get(l).getElementsByTag("measure").get((j-1));
+                        // when the "divisions" tag is present, the backup value needs to be recalculated because the time signature
+                            // or number of divisions per beat may have changed
+                        if (!changeDivision && !tempMeasure.getElementsByTag("divisions").isEmpty()) {
                             try {
-                                voiceNo = Integer.parseInt(voice.ownText()) + numVoices;
+                                divisions = Integer.parseInt(tempMeasure.getElementsByTag("divisions").first().ownText());
+                                changeDivision = true;
                             }
                             catch (NumberFormatException e) {
-                                // This is thrown when the staves tag doesn't contain an integer
-                                System.out.println("Invalid String");
+                                // This is thrown when the divisions tag doesn't contain an integer
+                                System.err.println("Invalid String");
                             }
-                            voice.text(""+voiceNo);
-                            Element staff;
-                            if (tabNote.getElementsByTag("staff").isEmpty()) {
-                                staff = new Element("staff").append("2");
+                        }
+                        if (!changeBeats && !tempMeasure.getElementsByTag("beats").isEmpty()) {
+                            try {
+                                beats = Integer.parseInt(tempMeasure.getElementsByTag("beats").first().ownText());
+                                changeBeats = true;
                             }
-                            else {
-                                staff = partAttributes.getElementsByTag("staff").first();
-                                staff.text("2");
+                            catch (NumberFormatException e) {
+                                // This is thrown when the beats tags doesn't contain an integer
+                                System.err.println("Invalid String");
                             }
-                            if (!tabNote.getElementsByTag("stem").isEmpty()) {
-                                tabNote.getElementsByTag("stem").last().after(staff);
+                        }
+                        if (changeBeats && changeDivision) {
+                            break;
+                        }
+                    }
+                    backupDistance = divisions * beats;
+                    // "backup" tag to put the write the tab staff to the beginning of the bar
+                    Element backup = new Element("backup");
+                    backup.appendElement("duration").append(backupDistance+"");
+                    thismeasure.appendChild(backup);
+                    currentMeasure = newMeasureNo;
+                }
+                // once all string/fret assignments are made, write them to the file
+                for (int j=0; j<songPartMatrix.get(l).get(i).size(); j++) {
+                    // gets the right note within the measure using the unsorted matrix
+                    boolean aNote = false;
+                    boolean aRest = false;
+                    Element thisnote = thismeasure.getElementsByTag("note").get(j);
+                    while (aNote == false && offset < numNotes) {
+                        // System.out.println((offset+j) + "  " + offset + " " + j + "  " + songPartMatrix.get(l).get(i).get(j).getMeasure() + "  " + numNotes);
+                        thisnote = thismeasure.getElementsByTag("note").get(offset);
+                        //ignore rests (they don't have a pitch) and tab notes
+                        if (thisnote.select("staff").isEmpty() || thisnote.getElementsByTag("staff").first().ownText() == "1") { 
+                            if (thisnote.getElementsByTag("pitch").isEmpty()) {
+                                aRest = true;
+                                // because j is iterating through the concurrent notes of which a rest is not a part
+                                j--;
+                                // System.out.println("rest");
                             }
-                            else {
-                                tabNote.getElementsByTag("type").last().after(staff);
-                            }
-                            // remove beams from tab notes
-                            tabNote.getElementsByTag("beam").remove();
-                            // if there is a backup tag before the note, append it to the tab
-                            if (thisnote.elementSiblingIndex() > 0 && thisnote.previousElementSibling().tagName() == "backup") {
-                                tabNote.before(thisnote.previousElementSibling().clone());
-                            }
-                            // add tags to the note if missing
-                            if (!aRest) {
-                                if (tabNote.getElementsByTag("notations").isEmpty()) {
-                                    tabNote.appendElement("notations").appendElement("technical");
-                                }
-                                if (tabNote.getElementsByTag("notations").get(0).getElementsByTag("technical").isEmpty()) {
-                                    tabNote.getElementsByTag("notations").get(0).appendElement("technical");
-                                }
-                                Element technical = tabNote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0);
-                                // the string and fret data 
-                                technical.appendElement("string").append((songPartMatrix.get(l).get(i).get(j).getStringNo()+1) + "");
-                                technical.appendElement("fret").append(songPartMatrix.get(l).get(i).get(j).getFretNo() + "");
-                            }
+                            offset++;
+                            aNote = true; // a note has been found in the bar
+                            break;
                         }
                         else {
-                            System.out.println("[[[ERROR NO NOTE FOUND]]]");
+                            offset++;
+                            // System.out.println("incrementing offset; note not found");
                         }
-                        
                     }
-
+                    if (aNote) {
+                        // make a copy of the note to be the tab staff version
+                        Element tabNote = thisnote.clone();
+                        thismeasure.appendChild(tabNote);
+                        Element voice = tabNote.getElementsByTag("voice").first();
+                        int voiceNo = 0;
+                        try {
+                            voiceNo = Integer.parseInt(voice.ownText()) + numVoices;
+                        }
+                        catch (NumberFormatException e) {
+                            // This is thrown when the staves tag doesn't contain an integer
+                            System.out.println("Invalid String");
+                        }
+                        voice.text(""+voiceNo);
+                        Element staff;
+                        if (tabNote.getElementsByTag("staff").isEmpty()) {
+                            staff = new Element("staff").append("2");
+                        }
+                        else {
+                            staff = partAttributes.getElementsByTag("staff").first();
+                            staff.text("2");
+                        }
+                        // write the staff information to the correct place
+                        if (!tabNote.getElementsByTag("notehead-text").isEmpty()) {
+                            tabNote.getElementsByTag("notehead-text").last().after(staff);
+                        }
+                        else if (!tabNote.getElementsByTag("notehead").isEmpty()) {
+                            tabNote.getElementsByTag("notehead").last().after(staff);
+                        }
+                        else if (!tabNote.getElementsByTag("stem").isEmpty()) {
+                            tabNote.getElementsByTag("stem").last().after(staff);
+                        }
+                        else if (!tabNote.getElementsByTag("time-modification").isEmpty()) {
+                            tabNote.getElementsByTag("time-modification").last().after(staff);
+                        }
+                        else if (!tabNote.getElementsByTag("accidental").isEmpty()) {
+                            tabNote.getElementsByTag("accidental").last().after(staff);
+                        }
+                        else {
+                            tabNote.getElementsByTag("type").last().after(staff);
+                        }
+                        // remove beams from tab notes
+                        tabNote.getElementsByTag("beam").remove();
+                        // if there is a backup tag before the note, append it to the tab
+                        if (thisnote.elementSiblingIndex() > 0 && thisnote.previousElementSibling().tagName() == "backup") {
+                            tabNote.before(thisnote.previousElementSibling().clone());
+                        }
+                        // add tags to the note if missing
+                        if (!aRest) {
+                            if (tabNote.getElementsByTag("notations").isEmpty()) {
+                                tabNote.appendElement("notations").appendElement("technical");
+                            }
+                            if (tabNote.getElementsByTag("notations").get(0).getElementsByTag("technical").isEmpty()) {
+                                tabNote.getElementsByTag("notations").get(0).appendElement("technical");
+                            }
+                            Element technical = tabNote.getElementsByTag("notations").get(0).getElementsByTag("technical").get(0);
+                            // the string and fret data 
+                            technical.appendElement("string").append((songPartMatrix.get(l).get(i).get(j).getStringNo()+1) + "");
+                            technical.appendElement("fret").append(songPartMatrix.get(l).get(i).get(j).getFretNo() + "");
+                        }
+                    }
+                    else {
+                        System.out.println("[[[ERROR NO NOTE FOUND]]]");
+                    }
+                    
                 }
 
                 
@@ -429,11 +440,38 @@ public class TabConverter {
             if (assignNote(new ChordMap(), chordNotes, new ArrayList<>())) {
                 // sort the ChordMaps by score
                 Collections.sort(chordMappings.get(chordNotes));
+                System.out.println("new chord");
+                for (int i=0; i<6; i++) {
+                    for (ChordMap cm: chordMappings.get(chordNotes)) {
+                        if (cm.getFretting().containsKey(i) && cm.getFretting().get(i) != null) {
+                            int fret = cm.getFretting().get(i);
+                            if (fret > 9) {
+                                System.out.printf(fret + "  - ");
+                            }
+                            else {
+                                System.out.printf(" " + fret + "  - ");
+                            }
+                        }
+                        else {
+                            System.out.printf(" -  - ");
+                        }
+
+                    }
+                    System.out.println("");
+                }
+                // System.out.println("Your ranking from best to worst:");
+                // for (ChordMap cm: chordMappings.get(chordNotes)) {
+                //     System.out.printf(" n  - ");
+                // }
+                System.out.println("");
+                System.out.println("");
             }
             else {
                 System.out.println("Failed to convert chord to tab");
             }
         }
+
+        
 
         return chord;
     }
@@ -542,6 +580,8 @@ public class TabConverter {
                 ArrayList<Transition> possibleTransitions = new ArrayList<>();
                 for (ChordMap c2Map : chord2Maps) {
                     Transition transition = new Transition(c2Map);
+                    //todo add a penalty for breaking tied notes/preventing slides,hammers,pulloffs etc.
+                    //todo add a reward for reusing chordMaps in the section
                     transition.calculateTransitionScore(c1Map);
                     possibleTransitions.add(transition);
                 }
@@ -551,12 +591,56 @@ public class TabConverter {
         }
         ArrayList<ArrayList<Note>> section = new ArrayList<>();
         bestPath = new ArrayList<>();
+        boolean overflow = false;
+        boolean removeLinkChord = false;
+        int sectionSizeLimit = 12; // true size is 1 more
         for (int i=0; i<=smPart.size(); i++) {
-            if (i == smPart.size() || (smPart.get(i).size() == 0 && !section.isEmpty())) {
+            if (i == smPart.size() || (smPart.get(i).size() == 0 && !section.isEmpty()) || section.size() == sectionSizeLimit) {
+                ArrayList<ChordMap> startPath = new ArrayList<>();
+                float startScore =  0f;
+                int startCounter = 1;
+                if (overflow == true) {
+                    if (section.size() == 1 && (i == smPart.size() || smPart.get(i).size() == 0)) {
+                        section.clear();
+                        overflow = false;
+                        continue;
+                    }
+                    ChordMap linkMap = bestPath.get(bestPath.size()-1);
+                    startPath.add(linkMap);
+                    overflow = false;
+                    removeLinkChord = true;
+                }
+                if (section.size() == sectionSizeLimit && (i != smPart.size() && smPart.get(i).size() > 0)) { //limits the dfs depth to 16
+                    section.add(smPart.get(i));
+                    overflow = true;
+                }
+                if (section.size() > 10) {
+                    searchLimit = 20-section.size();
+                    if (searchLimit < 4) {
+                        searchLimit = 4;
+                    }
+                }
+                else if (section.size() > 8) {
+                    searchLimit = 21-section.size();
+                }
+                else {
+                    searchLimit = 20;
+                }
                 currentBest = -1;
-                ArrayList<ChordMap> sectionPath = addToPath(allTransitions, section, new ArrayList<ChordMap>(), 1, (float) 0);
+                ArrayList<ChordMap> sectionPath = addToPath(allTransitions, section, startPath, startCounter, startScore);
+                if (removeLinkChord) {
+                    sectionPath.remove(0);
+                    removeLinkChord = false;
+                }
                 bestPath.addAll(sectionPath);
-                section.clear();
+                if (overflow == true) {
+                    ArrayList<Note> linkChord = section.get(section.size()-1);
+                    section.clear();
+                    section.add(linkChord);
+                }
+                else {
+                    section.clear();
+                }
             }
             else if (smPart.get(i).size() > 0) {
                 section.add(smPart.get(i));
@@ -599,19 +683,29 @@ public class TabConverter {
         }
         // case of first chord in sequence 
         if (i == 1) {
-            ArrayList<ChordMap> chord1Maps = chordMappings.get(chord1MidiNotes);
-            for (ChordMap c1Map : chord1Maps) {
+            ArrayList<ChordMap> chord1Maps;
+            if (path.size() == 0) {
+                chord1Maps = chordMappings.get(chord1MidiNotes);
+            }
+            else { // case of path overflow
+                chord1Maps = new ArrayList<>();
+                chord1Maps.add(path.get(0));
+            }
+            int mapLimit = searchLimit;
+            if (chord1Maps.size() < mapLimit) { mapLimit = chord1Maps.size(); }
+            for (ChordMap c1Map : chord1Maps.subList(0, mapLimit)) {
                 // if there is only one chord in the section return the best scoring chord
-                if (i >= smPart.size()) {
+                if (i >= smPart.size() && path.size() == 0) {
                     path.add(c1Map);
                     return path;
                 }
                 Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap> key = new Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap>(chord1MidiNotes, chord2MidiNotes, c1Map);
                 ArrayList<Transition> transitions = allTransitions.get(key);
-                for (Transition transition: transitions) {
+                int limit = searchLimit;
+                if (transitions.size() < limit) { limit = transitions.size(); }
+                for (Transition transition: transitions.subList(0, limit)) {
                     ArrayList<ChordMap> newPath = new ArrayList<>();
                     newPath.add(c1Map);
-                    newPath.addAll(path);
                     newPath.add(transition.getDstMap());
                     float newScore = pathScore+c1Map.getScore()+transition.getTransitionScore();
                     // prune paths that would only lead to a worse score than the current best
@@ -631,11 +725,19 @@ public class TabConverter {
             ChordMap c1Map = path.get(path.size()-1);
             Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap> key = new Triplet<ArrayList<Integer>, ArrayList<Integer>, ChordMap>(chord1MidiNotes, chord2MidiNotes, c1Map);
             ArrayList<Transition> transitions = allTransitions.get(key);
-            for (Transition transition: transitions) {
+            // limit the search space to those most likely to find an optimal result
+            int limit = searchLimit;
+            if (transitions.size() < limit) { limit = transitions.size(); }
+            for (Transition transition: transitions.subList(0, limit)) {
                 ArrayList<ChordMap> newPath = new ArrayList<>();
                 newPath.addAll(path);
                 newPath.add(transition.getDstMap());
+                //todo add a penalty for breaking tied notes/preventing slides,hammers,pulloffs etc. has to be calculated here because although the changes between notes may be shared, they may not have the same extra notations
                 float newScore = pathScore+transition.getTransitionScore();
+                // add a reward for reusing chordMaps in the section. has to be calculated here because dependent on the chosen path
+                if (path.contains(transition.getDstMap())) {
+                    newScore -= 0.5;
+                }
                 // prune paths that would only lead to a worse score than the current best
                 if (currentBest == -1 || newScore < currentBest) {
                     i++;

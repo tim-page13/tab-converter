@@ -11,6 +11,11 @@
     </param-value> 
     <description>Location to store uploaded file</description> 
   </context-param>
+  <listener>
+    <listener-class>
+      org.apache.commons.fileupload.servlet.FileCleanerCleanup
+    </listener-class>
+  </listener>
   <servlet>
     <servlet-name>Servlet</servlet-name>
     <servlet-class>com.timpage.Servlet</servlet-class>
