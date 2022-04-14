@@ -14,6 +14,7 @@ import com.timpage.app.App;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FileExistsException;
 
 public class UploadServlet extends HttpServlet {
    
@@ -91,22 +92,27 @@ public class UploadServlet extends HttpServlet {
                     boolean isInMemory = fi.isInMemory();
                     // long sizeInBytes = fi.getSize();
                     
-                    // Write the file
-                    // if( fileName.lastIndexOf("/") >= 0 ) {
-                        // file = new File( filePath + fileName.substring( fileName.lastIndexOf("/"))) ;
-                        // System.out.println("made new " + file.getAbsolutePath() + " " + isInMemory);
-                    // } else {
-                        file = new File( filePath + fileName.substring(fileName.lastIndexOf("/")+1)) ;
-                        System.out.println("made new " + file.getAbsolutePath() + " " + isInMemory);
-                    // }
-                    fi.write( file ) ;
+                    int num = 0;
+                    String defaultFileName = fileName.substring(fileName.lastIndexOf("/")+1);
+                    fileName = defaultFileName;
+                    file = new File(filePath + defaultFileName);
+                    while(file.exists()) {
+                        fileName = defaultFileName.substring(0, defaultFileName.lastIndexOf(".")) 
+                                + (num++) + defaultFileName.substring(defaultFileName.lastIndexOf("."));
+                        file = new File(filePath + fileName); 
+                    }
+                    System.out.println(filePath + fileName);
+                    fi.write( file );
                     out.println("Uploaded Filename: " + fileName + "<br>");
                 }
             }
             out.println("</body>");
             out.println("</html>");
             //todo figure out where to redirect in the case where there are multiple files uploaded
+            long startTime = System.currentTimeMillis();
             App runTC = new App(file);
+            long endTime = System.currentTimeMillis();
+            System.out.println("*****Transition calculations took " + (endTime - startTime) + " milliseconds*******");
             String fileName = runTC.getNewFileName().substring(runTC.getNewFileName().lastIndexOf("/")+1, runTC.getNewFileName().length());
             String newFilePath = "/data/" + fileName;
             request.setAttribute("filename", newFilePath);
