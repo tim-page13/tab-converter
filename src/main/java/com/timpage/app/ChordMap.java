@@ -107,6 +107,7 @@ public class ChordMap implements Comparable<ChordMap> {
         int min = -1;
         int max = -1;
         Set<Integer> fretsUsed = new LinkedHashSet<Integer>();
+        int frettedStrings = 0;
         int cumulativeFrets = 0;
         float skippedStrings = 0;
         int counter = 0;
@@ -124,6 +125,7 @@ public class ChordMap implements Comparable<ChordMap> {
             // open frets are discounted from range penalties 
             if (fret != 0) {
                 fretsUsed.add(fret);
+                frettedStrings++;
                 cumulativeFrets += fret;
                 if (min == -1 || fret < min) {
                     min = fret;
@@ -136,7 +138,7 @@ public class ChordMap implements Comparable<ChordMap> {
         int range = max-min;
         int numFretsUsed = fretsUsed.size();
         if (cumulativeFrets > 0) {
-            averageFret = cumulativeFrets/(float)numFretsUsed;
+            averageFret = cumulativeFrets/(float)frettedStrings;
         }
         float neckPenalty = (float) Math.sqrt((double) averageFret);
         skippedStrings = skippedStrings/2;
