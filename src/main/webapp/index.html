@@ -2,14 +2,15 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Start Page</title>
+        <title>tabConverter - Start Page</title>
         <meta http-equiv="Content-Type" content="text/html; charset-UTF-8">
     </head>
-    <body>
-        <h2>Welcome to my tab converter!</h2>
-        <form action="./UploadServlet" method="POST" enctype="multipart/form-data">
-          <input type="file" id="myFile" name="file" size="50">
-          <input type="submit" value="Click here">
+    <body style="text-align: center">
+        <h2>Welcome to tabConverter!</h2><br>
+        To convert a sheet music file to tab, simply choose the MusicXML file you want to convert below and click 'Convert to Tab'! <br><br>
+        <form action="./UploadServlet" method="POST" enctype="multipart/form-data" style="width:100%;min-width: 150px;">
+          <input type="file" id="myFile" name="file" size="100" style="width:fit-content;">
+          <input type="submit" value="Convert to Tab">
         </form>
     </body>
 </html>

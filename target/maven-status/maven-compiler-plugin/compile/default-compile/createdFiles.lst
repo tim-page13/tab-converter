@@ -15,6 +15,7 @@ com/timpage/musicXMLparserDH/music/Fragment.class
 com/timpage/musicXMLparserDH/musicXMLparserDHrun.class
 com/timpage/Servlet.class
 com/timpage/musicXMLparserDH/spiralArray/MajorKeyInterface.class
+com/timpage/musicXMLparserDH/music/Join.class
 com/timpage/musicXMLparserDH/spiralArray/Utils.class
 com/timpage/app/TabConverter$2.class
 com/timpage/musicXMLparserDH/spiralArray/Parameters.class

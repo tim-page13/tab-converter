@@ -136,24 +136,24 @@ public class musicXMLparserDH extends HttpServlet {
         }
         //voicesIndex = getNumberOfVoices();
 
-        notesOfSong = getAllNotes();
+        // notesOfSong = getAllNotes();
         notesOfSongParts = getAllNotesParts();
 
 
-        flatSong = setSongArrayOfStrings(notesOfSong);
+        // flatSong = setSongArrayOfStrings(notesOfSong);
 
-        songMatrix = setSongMatrix(notesOfSong);
+        // songMatrix = setSongMatrix(notesOfSong);
         songPartMatrix = setSongPartMatrix(notesOfSongParts);
 
 
-        //set ID for each note
-        for (int i = 1; i <= notesOfSong.size(); i++){
-            notesOfSong.get(i-1).setId(i);
-            // System.out.println("there are at least " + (i-1) + " notes. This one is " + notesOfSong.get(i-1).getPitch() + notesOfSong.get(i-1).getAccidental());
-        }
+        // //set ID for each note
+        // for (int i = 1; i <= notesOfSong.size(); i++){
+        //     notesOfSong.get(i-1).setId(i);
+        //     // System.out.println("there are at least " + (i-1) + " notes. This one is " + notesOfSong.get(i-1).getPitch() + notesOfSong.get(i-1).getAccidental());
+        // }
 
 
-        removeRests();
+        // removeRests();
 
 
 
@@ -793,6 +793,43 @@ public class musicXMLparserDH extends HttpServlet {
 
                         note.setStaff(staff);
 
+                        if (!thisnote.getElementsByTag("tied").isEmpty()){
+                            for (Element tie: thisnote.getElementsByTag("tied")) {
+                                int tieNum = 1;
+                                if (tie.attr("number") != "") {
+                                    tieNum = Integer.valueOf(tie.attr("number"));
+                                }
+                                note.addJoin("tied", tieNum, tie.attr("type"), note.getMidiPitch());
+                            }
+                        }
+                        if (!thisnote.getElementsByTag("slide").isEmpty()){
+                            for (Element slide: thisnote.getElementsByTag("slide")) {
+                                int slideNum = 1;
+                                if (slide.attr("number") != "") {
+                                    slideNum = Integer.valueOf(slide.attr("number"));
+                                }
+                                note.addJoin("slide", slideNum, slide.attr("type"), note.getMidiPitch());
+                            }
+                        }
+                        if (!thisnote.getElementsByTag("hammer-on").isEmpty()){
+                            for (Element hammer: thisnote.getElementsByTag("hammer-on")) {
+                                int hammerNum = 1;
+                                if (hammer.attr("number") != "") {
+                                    hammerNum = Integer.valueOf(hammer.attr("number"));
+                                }
+                                note.addJoin("hammer-on", hammerNum, hammer.attr("type"), note.getMidiPitch());
+                            }
+                        }
+                        if (!thisnote.getElementsByTag("pull-off").isEmpty()){
+                            for (Element pullOff: thisnote.getElementsByTag("pull-off")) {
+                                int pullOffNum = 1;
+                                if (pullOff.attr("number") != "") {
+                                    pullOffNum = Integer.valueOf(pullOff.attr("number"));
+                                }
+                                note.addJoin("pull-off", pullOffNum, pullOff.attr("type"), note.getMidiPitch());
+                            }
+                        }
+
 
 
                         //System.out.print(" dur: " + duration);
@@ -995,6 +1032,42 @@ public class musicXMLparserDH extends HttpServlet {
 
                         note.setStaff(staff);
 
+                        if (!thisnote.getElementsByTag("tied").isEmpty()){
+                            for (Element tie: thisnote.getElementsByTag("tied")) {
+                                int tieNum = 1;
+                                if (tie.attr("number") != "") {
+                                    tieNum = Integer.valueOf(tie.attr("number"));
+                                }
+                                note.addJoin("tied", tieNum, tie.attr("type"), note.getMidiPitch());
+                            }
+                        }
+                        if (!thisnote.getElementsByTag("slide").isEmpty()){
+                            for (Element slide: thisnote.getElementsByTag("slide")) {
+                                int slideNum = 1;
+                                if (slide.attr("number") != "") {
+                                    slideNum = Integer.valueOf(slide.attr("number"));
+                                }
+                                note.addJoin("slide", slideNum, slide.attr("type"), note.getMidiPitch());
+                            }
+                        }
+                        if (!thisnote.getElementsByTag("hammer-on").isEmpty()){
+                            for (Element hammer: thisnote.getElementsByTag("hammer-on")) {
+                                int hammerNum = 1;
+                                if (hammer.attr("number") != "") {
+                                    hammerNum = Integer.valueOf(hammer.attr("number"));
+                                }
+                                note.addJoin("hammer-on", hammerNum, hammer.attr("type"), note.getMidiPitch());
+                            }
+                        }
+                        if (!thisnote.getElementsByTag("pull-off").isEmpty()){
+                            for (Element pullOff: thisnote.getElementsByTag("pull-off")) {
+                                int pullOffNum = 1;
+                                if (pullOff.attr("number") != "") {
+                                    pullOffNum = Integer.valueOf(pullOff.attr("number"));
+                                }
+                                note.addJoin("pull-off", pullOffNum, pullOff.attr("type"), note.getMidiPitch());
+                            }
+                        }
 
 
                         //System.out.print(" dur: " + duration);

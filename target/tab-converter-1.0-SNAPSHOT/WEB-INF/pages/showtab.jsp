@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Tab</title>
+        <title>tabConverter - Display Page</title>
         <meta http-equiv="Content-Type" content="text/html; charset-UTF-8">
+        <%-- <link rel="stylesheet" href="style.css"> --%>
     </head>
-    <body>
+    <body style="text-align: center">
         <h2>Your converted tab:</h2>
         <form action="./UploadServlet" method="POST" enctype="multipart/form-data">
           <input type="file" id="myFile" name="file" size="50">
