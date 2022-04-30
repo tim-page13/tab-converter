@@ -72,7 +72,7 @@ public class Transition implements Comparable<Transition> {
         transitionScore = neckMovement + matchingFingerings + dstMap.getScore();
         // different shape between chords penalty. rewards chord changes that keep the same shape
         if (stringMatches == 0 || stringMatches == 7) {
-            transitionScore++;
+            transitionScore+=2;
         }
         return transitionScore;
     }

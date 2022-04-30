@@ -13,12 +13,14 @@ public class ChordMap implements Comparable<ChordMap> {
     // lower score is better
     private float score;
     private float averageFret;
+    private int[] pitches;
     
     /**
      * Constructor for the ChordMap object
      */
     public ChordMap() {
         frettings = new Hashtable<>();
+        pitches = new int[6];
     }
 
     /**
@@ -29,6 +31,7 @@ public class ChordMap implements Comparable<ChordMap> {
         this.frettings = new Hashtable<>();
         this.frettings.putAll(otherCM.frettings);
         this.score = otherCM.getScore();
+        this.pitches = otherCM.pitches.clone();
     }
 
 
@@ -110,40 +113,65 @@ public class ChordMap implements Comparable<ChordMap> {
         int frettedStrings = 0;
         int cumulativeFrets = 0;
         float skippedStrings = 0;
+        boolean stringSkipped = false;
+        boolean fromOpen = false;
         int counter = 0;
         Enumeration<Integer> e = frettings.keys();
     
         while (e.hasMoreElements()) {
             int string = e.nextElement();
             int fret = frettings.get(string);
-            // the first string
-            if (counter != 0) {
-                // penalty applied for not using adjacent strings
-                skippedStrings += counter-string;
-            }
-            counter = string-1;
+            fretsUsed.add(fret);
             // open frets are discounted from range penalties 
             if (fret != 0) {
-                fretsUsed.add(fret);
                 frettedStrings++;
-                cumulativeFrets += fret;
                 if (min == -1 || fret < min) {
                     min = fret;
                 }
                 if (max == -1 || fret > max) {
                     max = fret;
                 }
+                // punished extra for skipping a string after an open string
+                if (stringSkipped && fromOpen) {
+                    skippedStrings++;
+                }
+                fromOpen = false;
             }
+            // punished extra for skipping to an open string 
+            else if (stringSkipped == true) {
+                skippedStrings++;
+                fromOpen = true;
+            }
+            else {
+                fromOpen = true;
+            }
+            stringSkipped = false;
+            // if not the first string
+            if (counter != 0) {
+                // penalty applied for not using adjacent strings
+                int stringJump = counter-string;
+                if (stringJump > 0) {
+                    stringSkipped = true;
+                    skippedStrings += stringJump;
+                }
+            }
+            counter = string-1;
         }
         int range = max-min;
-        int numFretsUsed = fretsUsed.size();
-        if (cumulativeFrets > 0) {
-            averageFret = cumulativeFrets/(float)frettedStrings;
+        int numNonZeroFretsUsed = fretsUsed.size();
+        if (fretsUsed.contains(0)) {
+            numNonZeroFretsUsed--;
         }
-        float neckPenalty = (float) Math.sqrt((double) averageFret);
-        skippedStrings = skippedStrings/2;
+        if (frettedStrings > 0) {
+            for (Integer fret: fretsUsed) {
+                cumulativeFrets += fret;
+            }
+            averageFret = cumulativeFrets/(float)numNonZeroFretsUsed;
+        }
+        float neckPenalty = (float) Math.cbrt((double) averageFret);
+        // skippedStrings = skippedStrings/2;
 
-        score = range + numFretsUsed + neckPenalty + skippedStrings;
+        score = range + fretsUsed.size() + neckPenalty + skippedStrings;
         return score;
     }
 
@@ -168,4 +196,24 @@ public class ChordMap implements Comparable<ChordMap> {
         return 0;
     }
 
+    public void addPitch(int string, int midiPitch) {
+        pitches[string] = midiPitch;
+    }
+
+    public int getPitchString(int midiPitch) {
+        for (int i=0; i<pitches.length; i++) {
+            if (pitches[i] == midiPitch) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public int getStringPitch(int string) {
+        return pitches[string];
+    }
+    
+    public int[] getPitches() {
+        return pitches;
+    }
 }
