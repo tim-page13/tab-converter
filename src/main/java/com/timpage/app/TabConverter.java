@@ -12,6 +12,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 
+import com.timpage.musicXMLparserDH.music.Join;
 import com.timpage.musicXMLparserDH.music.Note;
 import com.timpage.musicXMLparserDH.parser.musicXMLparserDH;
 
@@ -161,8 +162,8 @@ public class TabConverter {
                     }
                 }
                 catch (NumberFormatException e) {
-                    // This is thrown when the staves tag doesn't contain an integer
-                    System.out.println("Invalid String: staves tag doesn't contain an integer");
+                    // This is thrown when the voice tag doesn't contain an integer
+                    System.out.println("Invalid String: voice tag doesn't contain an integer");
                 }
             }
             // add xml tags for the TAB clef and stave information
@@ -322,7 +323,6 @@ public class TabConverter {
                                 aRest = true;
                                 // because j is iterating through the concurrent notes of which a rest is not a part
                                 j--;
-                                // System.out.println("rest");
                             }
                             offset++;
                             aNote = true; // a note has been found in the bar
@@ -330,7 +330,6 @@ public class TabConverter {
                         }
                         else {
                             offset++;
-                            // System.out.println("incrementing offset; note not found");
                         }
                     }
                     if (aNote) {
@@ -417,23 +416,12 @@ public class TabConverter {
      * @return the set of notes but with the string and fret assignments within the Note objects
      */
     private List<Note> chordToTab(List<Note> chord) {
-        //todo check how many notes are being played. If >6 check for duplicates, else assign the first 6
-        
         // perform a DFS with branch and bound to prune invalid combinations of string/fret assignments
         // the midipitches of the notes in the chord
         ArrayList<Integer> chordNotes = new ArrayList<>();
         for (int j=0; j<chord.size(); j++) {
             chordNotes.add(chord.get(j).getMidiPitch());
         }
-        // if any notes have already been assigned to strings, don't assign any other notes to that string
-                // This is leftover from plans for supporting multiple voices
-        // boolean[] takenStrings = new boolean[guitar.getGuitarStrings().size()];
-        // for (int j=0; j<chord.size(); j++) {
-        //     if (chord.get(j).getStringNo() != null) {
-        //         takenStrings[chord.get(j).getStringNo()] = true;
-        //     }
-        // }
-
         // calculate the possible assignments if not already in the store
         if (!chordMappings.containsKey(chordNotes)) {
             // only if the assignment was successful
@@ -523,6 +511,7 @@ public class TabConverter {
                         // deep copy of the chordmap to be modified and passed into the recursive function
                         ChordMap cmCopy = new ChordMap(cm);
                         noteAssigned = cmCopy.addFretting(k, fret);
+                        cmCopy.addPitch(k, chordNotes.get(j));
                         // when there is an assignment for all notes
                         if (noteAssigned) {
                             // deep copy of the assigned notes to be modified and passed into the recursive function
@@ -580,8 +569,6 @@ public class TabConverter {
                 ArrayList<Transition> possibleTransitions = new ArrayList<>();
                 for (ChordMap c2Map : chord2Maps) {
                     Transition transition = new Transition(c2Map);
-                    //todo add a penalty for breaking tied notes/preventing slides,hammers,pulloffs etc.
-                    //todo add a reward for reusing chordMaps in the section
                     transition.calculateTransitionScore(c1Map);
                     possibleTransitions.add(transition);
                 }
@@ -610,7 +597,7 @@ public class TabConverter {
                     overflow = false;
                     removeLinkChord = true;
                 }
-                if (section.size() == sectionSizeLimit && (i != smPart.size() && smPart.get(i).size() > 0)) { //limits the dfs depth to 16
+                if (section.size() == sectionSizeLimit && (i != smPart.size() && smPart.get(i).size() > 0)) {
                     section.add(smPart.get(i));
                     overflow = true;
                 }
@@ -672,13 +659,47 @@ public class TabConverter {
         // the midipitches of the notes in the chords
         ArrayList<Integer> chord1MidiNotes = new ArrayList<>();
         ArrayList<Integer> chord2MidiNotes = new ArrayList<>();
+        ArrayList<Join> chord1Joins = new ArrayList<>();
+        ArrayList<Join> chord2Joins = new ArrayList<>();
         for (int j=0; j<chord1.size(); j++) {
             chord1MidiNotes.add(chord1.get(j).getMidiPitch());
+            for (Join join: chord1.get(j).getJoins()) {
+                // only interested in the joins starting in chord1 and ending in chord2
+                if (join.getType().equals("start")) {
+                    chord1Joins.add(join);
+                }
+            }
         }
         if (smPart.size() > 1) {
             ArrayList<Note> chord2 = smPart.get(i);
             for (int j=0; j<chord2.size(); j++) {
                 chord2MidiNotes.add(chord2.get(j).getMidiPitch());
+                for (Join join: chord2.get(j).getJoins()) {
+                    // only interested in the joins starting in chord1 and ending in chord2
+                    if (join.getType().equals("stop")) {
+                        // for each join in chord2, check there is a matching join in chord1
+                        for (Join c1Join: chord1Joins) {
+                            if (c1Join.getJoinType() == join.getJoinType() && c1Join.getNum() == join.getNum()) {
+                                chord2Joins.add(join);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // for each join in chord1, check there is a matching join in chord2
+        for (Join join1: chord1Joins) {
+            Boolean match = false;
+            for (Join join2: chord2Joins) {
+                if (join1.getJoinType() == join2.getJoinType() && join1.getNum() == join2.getNum()) {
+                    match = true;
+                    join1.setMatchingJoin(join2);
+                    break;
+                }
+            }
+            if (!match) {
+                chord1Joins.remove(join1);
             }
         }
         // case of first chord in sequence 
@@ -706,8 +727,17 @@ public class TabConverter {
                 for (Transition transition: transitions.subList(0, limit)) {
                     ArrayList<ChordMap> newPath = new ArrayList<>();
                     newPath.add(c1Map);
-                    newPath.add(transition.getDstMap());
+                    ChordMap c2Map = transition.getDstMap();
+                    newPath.add(c2Map);
                     float newScore = pathScore+c1Map.getScore()+transition.getTransitionScore();
+                    // check tied notes are on the same string
+                    for (Join join1: chord1Joins) {
+                        int j1String = c1Map.getPitchString(join1.getMidiPitch());
+                        int j2Pitch = c2Map.getStringPitch(j1String);
+                        if (join1.getMidiPitch() != j2Pitch) {
+                            newScore += 5;
+                        }
+                    }
                     // prune paths that would only lead to a worse score than the current best
                     if (currentBest == -1 || newScore < currentBest) {
                         i++;
@@ -731,12 +761,20 @@ public class TabConverter {
             for (Transition transition: transitions.subList(0, limit)) {
                 ArrayList<ChordMap> newPath = new ArrayList<>();
                 newPath.addAll(path);
-                newPath.add(transition.getDstMap());
-                //todo add a penalty for breaking tied notes/preventing slides,hammers,pulloffs etc. has to be calculated here because although the changes between notes may be shared, they may not have the same extra notations
+                ChordMap c2Map = transition.getDstMap();
+                newPath.add(c2Map);
                 float newScore = pathScore+transition.getTransitionScore();
-                // add a reward for reusing chordMaps in the section. has to be calculated here because dependent on the chosen path
-                if (path.contains(transition.getDstMap())) {
-                    newScore -= 0.5;
+                // check tied notes are on the same string
+                for (Join join1: chord1Joins) {
+                    int j1String = c1Map.getPitchString(join1.getMidiPitch());
+                    int j2Pitch = c2Map.getStringPitch(j1String);
+                    if (join1.getMidiPitch() != j2Pitch) {
+                        newScore += 5;
+                    }
+                }
+                // add a penalty for not reusing chordMaps in the section. has to be calculated here because dependent on the chosen path
+                if (!path.contains(transition.getDstMap())) {
+                    newScore += 0.5;
                 }
                 // prune paths that would only lead to a worse score than the current best
                 if (currentBest == -1 || newScore < currentBest) {

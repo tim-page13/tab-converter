@@ -1,9 +1,7 @@
 package com.timpage.musicXMLparserDH.music;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
-import java.util.Comparator;
 
 /**
  * Created by dorien on 10/11/14.
@@ -13,15 +11,7 @@ import java.util.Comparator;
 
 public class Note {
 
-    //we don't need an id I believe
-
-    //type note, chord
-
-    //private Type type;
     private Integer id;
-
-    //careful featureX uses a letter for pitch
-
     private Integer measure;
 
     public void setMeasure(Integer measure) {
@@ -48,6 +38,7 @@ public class Note {
     // --TP-- used for guitar notes
     private Integer stringNo;
     private Integer fretNo;
+    private ArrayList<Join> joins;
 
     public void setReferenceChange(Integer referenceChange) {
         this.referenceChange = referenceChange;
@@ -69,37 +60,17 @@ public class Note {
     public Note(Integer id, String nonparsed) {
 
         this.id = id;
-      //  this.type = type;
         this.staff = 1;
 
 
-
-//
-
-
-//        //fill pitchset
-//        pitchSet.add(60);
-//        pitchSet.add(62);
-//        pitchSet.add(64);
-//        pitchSet.add(65);
-//        pitchSet.add(67);
-//        pitchSet.add(69);
-//        pitchSet.add(71);
-//        pitchSet.add(72);
-//        pitchSet.add(74);
-
-
-            //fill duration set
-            durationSet.add(2);
-            durationSet.add(4);
-            durationSet.add(8);
-
+        //fill duration set
+        durationSet.add(2);
+        durationSet.add(4);
+        durationSet.add(8);
 
         //default values
         referenceNoteID = 0;
         referenceChange = 0;
-
-
 
     }
 
@@ -111,6 +82,8 @@ public class Note {
 
         this.referenceNoteID = 0;
         this.referenceChange = 0;
+
+        this.joins = new ArrayList<>();
     }
 
     public void setStaff(Integer staff) {
@@ -128,36 +101,9 @@ public class Note {
         }
     }
 
-    //public Type getType() {
-    //    return type;
-    //}
-
-
-    //types of events
-   /* public enum Type {
-        Chord, Note;
-
-        public static Type parse(String s) {
-            for (Type type : values()) {
-                if (type.name().equals(s)) {
-                    return type;
-                }
-            }
-            throw new IllegalArgumentException("Unknown event type [" + s + "].");
-        }
-    }   */
-
-
-
     public void setRandom(){
 
-
-        //TODO more efficient if sets are in fragment class
-
         Random random = new Random();
-//        int index = random.nextInt(pitchSet.size());
-
-//        this.pitch = pitchSet.get(index);
 
         int index = random.nextInt(durationSet.size());
 
@@ -166,35 +112,13 @@ public class Note {
 
     }
 
-//    public Integer getPitch() {
-//        return pitch;
-//    }
-
     public Integer getDuration() {
         return duration;
     }
 
-//    public ArrayList<Integer> getPitchSet() {
-//        return pitchSet;
-//    }
-
     public ArrayList<Integer> getDurationSet() {
         return durationSet;
     }
-
-//    public void setPitch(Integer pitch) {
-//        this.pitch = pitch;
-//    }
-
-//    public void changeRandom(){
-//        Random random = new Random();
-//        this.pitch =  random.nextInt(pitchSet.size());
-//    }
-
-//    public Note() {
-//
-//
-//    }
 
     public void setId(int id) {
         this.id = id;
@@ -268,7 +192,6 @@ public class Note {
     }
 
     public void calculateMidiPitch() {
-        //todo
 
         Integer baseMidi = 0;
         if (this.pitch.equals("C")){
@@ -295,32 +218,10 @@ public class Note {
 
 
             this.midiPitch = baseMidi + ( 12 * (this.octave + 1));
-
-            int test = 0;
         }
 
 
     }
-
-    // --TP--
-    // @Override
-    // public int compareTo(Note obj) {
-    //     int mp2 = ((Note) obj).getMidiPitch();
-    //     //sort in ascending order
-    //     return this.midiPitch-mp2;
-    //     //sort in descending order
-    //     //return obj.age-this.age;
-    // }
-
-    // public static Comparator<Note> midiComparator = new Comparator<Note>() {
-
-    //     @Override
-    //     public int compare(Note o1, Note o2) {
-    //         int mp1 = o1.getMidiPitch();
-    //         int mp2 = o2.getMidiPitch();
-    //         return mp1-mp2;
-    //     }
-    // };
 
     public Integer getFretNo() {
         return fretNo;
@@ -342,10 +243,14 @@ public class Note {
         return id;
     }
 
+    public void addJoin(String joinType, int num, String type, int midiPitch) {
+        Join newJoin = new Join(joinType, num, type, midiPitch);
+        joins.add(newJoin);
+    }
 
-
-
-
+    public ArrayList<Join> getJoins() {
+        return joins;
+    }
 
 
 
