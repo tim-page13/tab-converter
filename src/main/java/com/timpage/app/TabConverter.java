@@ -37,51 +37,6 @@ public class TabConverter {
 
 
     /**
-     * Constructor for the TabConverter object. Only used in testing
-     * Handles the parsing of the given file in preparation of its conversion to tab
-     * @param filename the name of the file to be converted to tab
-     * @throws IOException if the input file cannot be read
-     */
-    // public TabConverter(String filename) throws IOException {
-    //     try {
-    //         parser = new musicXMLparserDH(filename);
-    //         parser.parseMusicXML();
-    //         songPartMatrix = parser.getSongPartMatrix();
-    //         guitar = new Guitar();
-    //         if (filename.contains(".xml")) {
-    //             int end = filename.lastIndexOf(".xml");
-    //             String start = filename.substring(0, end);
-    //             destFileName = start + "-tab" + ".xml";
-    //         }
-    //         else if (filename.contains(".musicxml")) {
-    //             int end = filename.lastIndexOf(".musicxml");
-    //             String start = filename.substring(0, end);
-    //             destFileName = start + "-tab" + ".musicxml";
-    //         }
-    //         else {
-    //             destFileName = filename + "-tab";
-    //         }
-    //         InputStream is = new FileInputStream(filename) {
-    //             @Override
-    //             public int read() throws IOException {
-    //                 return 0;
-    //             }
-    //         };
-    //         doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
-    //         if (doc.getElementsByTag("note").isEmpty()) {
-    //             doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
-    //             if (doc.getElementsByTag("note").isEmpty()) {
-    //                 System.out.println("Please check that your file is encoded in UTF-8 or UTF-16 and contains notes.");
-    //             }
-    //         }
-            
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
-             
-    // }
-
-    /**
      * Constructor for the TabConverter object
      * Handles the parsing of the given file in preparation of its conversion to tab
      * @param file the file to be converted to tab
