@@ -12,21 +12,6 @@ public class App {
 
     /**
      * Constructor for the App object. Used as the driver for first parsing the input file and then converting it to tab.
-     * @param filename the name of the file to be parsed and converted to tab
-     */
-    public App(String filename) {
-        try {
-            TabConverter tc = new TabConverter(filename);
-            newFileName = tc.convertPartsToTab();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } 
-    }
-
-    /**
-     * Constructor for the App object. Used as the driver for first parsing the input file and then converting it to tab.
      * @param file the file to be parsed and converted to tab
      */
     public App(File file) {

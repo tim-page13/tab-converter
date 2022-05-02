@@ -1,28 +1,14 @@
 package com.timpage.musicXMLparserDH.music;
 
 import java.util.ArrayList;
-import java.util.Random;
+
 
 /**
- * Created by dorien on 10/11/14.
+ * Initially created by dorien on 10/11/14. Modified by Tim Page
  */
-
-
-
 public class Note {
 
-    private Integer id;
     private Integer measure;
-
-    public void setMeasure(Integer measure) {
-        this.measure = measure;
-    }
-
-    public Integer getMeasure() {
-
-        return measure;
-    }
-
     private Integer startTime;
     private Integer duration;
     private String pitch;     //Z is for rest
@@ -33,45 +19,21 @@ public class Note {
     private Integer midiPitch;
     private Integer octave;
     private Integer staff;
-    private Integer referenceNoteID;
-    private Integer referenceChange;
     // --TP-- used for guitar notes
     private Integer stringNo;
     private Integer fretNo;
     private ArrayList<Join> joins;
 
-    public void setReferenceChange(Integer referenceChange) {
-        this.referenceChange = referenceChange;
+    public void setMeasure(Integer measure) {
+        this.measure = measure;
     }
 
-    public void setReferenceNoteID(Integer referenceNoteID) {
-        this.referenceNoteID = referenceNoteID;
+    public Integer getMeasure() {
+        return measure;
     }
 
-    private ArrayList<Integer> durationSet = new ArrayList<Integer>();
-
-    public Integer getReferenceNoteID() {
-        return referenceNoteID;
-    }
-
-    public Integer getReferenceChange() {
-        return referenceChange;
-    }
     public Note(Integer id, String nonparsed) {
-
-        this.id = id;
         this.staff = 1;
-
-
-        //fill duration set
-        durationSet.add(2);
-        durationSet.add(4);
-        durationSet.add(8);
-
-        //default values
-        referenceNoteID = 0;
-        referenceChange = 0;
-
     }
 
     public Note(Integer startTime) {
@@ -79,10 +41,6 @@ public class Note {
         this.accidental = "";
         this.midiPitch = null;
         this.accidentalInt = 0;
-
-        this.referenceNoteID = 0;
-        this.referenceChange = 0;
-
         this.joins = new ArrayList<>();
     }
 
@@ -101,29 +59,9 @@ public class Note {
         }
     }
 
-    public void setRandom(){
-
-        Random random = new Random();
-
-        int index = random.nextInt(durationSet.size());
-
-        this.duration = durationSet.get(index);
-
-
-    }
-
     public Integer getDuration() {
         return duration;
     }
-
-    public ArrayList<Integer> getDurationSet() {
-        return durationSet;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
 
     public void setCounter(Integer counter) {
         this.counter = counter;
@@ -199,27 +137,27 @@ public class Note {
         }
         else if(this.pitch.equals("D")){
             baseMidi = 2;
-
-        }else if(this.pitch.equals("E")){
+        }
+        else if(this.pitch.equals("E")){
             baseMidi = 4;
-        }else if(this.pitch.equals("F")){
+        }
+        else if(this.pitch.equals("F")){
             baseMidi = 5;
-        }else if(this.pitch.equals("G")){
+        }
+        else if(this.pitch.equals("G")){
             baseMidi = 7;
-        }else if(this.pitch.equals("A")){
+        }
+        else if(this.pitch.equals("A")){
             baseMidi = 9;
-        }else if(this.pitch.equals("B")) {
+        }
+        else if(this.pitch.equals("B")) {
             baseMidi = 11;
         }
 
         if (!this.pitch.equals("Z")){
-
             baseMidi = baseMidi + this.accidentalInt;
-
-
             this.midiPitch = baseMidi + ( 12 * (this.octave + 1));
         }
-
 
     }
 
@@ -237,10 +175,6 @@ public class Note {
 
     public void setStringNo(Integer sn) {
         stringNo = sn;
-    }
-
-    public Integer getId() {
-        return id;
     }
 
     public void addJoin(String joinType, int num, String type, int midiPitch) {

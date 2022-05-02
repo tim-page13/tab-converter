@@ -118,6 +118,7 @@ public class ChordMap implements Comparable<ChordMap> {
         int counter = 0;
         Enumeration<Integer> e = frettings.keys();
     
+        // iterate through each of the strings used in the fingering
         while (e.hasMoreElements()) {
             int string = e.nextElement();
             int fret = frettings.get(string);
@@ -163,18 +164,24 @@ public class ChordMap implements Comparable<ChordMap> {
             numNonZeroFretsUsed--;
         }
         if (frettedStrings > 0) {
+            // calculate the average of the distinct fret values
             for (Integer fret: fretsUsed) {
                 cumulativeFrets += fret;
             }
             averageFret = cumulativeFrets/(float)numNonZeroFretsUsed;
         }
+        // penalty for using higher frets
         float neckPenalty = (float) Math.cbrt((double) averageFret);
-        // skippedStrings = skippedStrings/2;
 
+        // sum together all the penalties
         score = range + fretsUsed.size() + neckPenalty + skippedStrings;
         return score;
     }
 
+    /**
+     * Gets the average fret used in the chord
+     * @return the average fret used in the chord
+     */
     public float getAverageFret() {
         return averageFret;
     }
@@ -196,10 +203,20 @@ public class ChordMap implements Comparable<ChordMap> {
         return 0;
     }
 
+    /**
+     * Records the MIDI pitch for string which has a fretting
+     * @param string
+     * @param midiPitch
+     */
     public void addPitch(int string, int midiPitch) {
         pitches[string] = midiPitch;
     }
 
+    /**
+     * Finds the string number for which the pitch of the fret is the pitch given
+     * @param midiPitch the MIDI pitch needed to be found from one of the strings
+     * @return the string which has the pitch
+     */
     public int getPitchString(int midiPitch) {
         for (int i=0; i<pitches.length; i++) {
             if (pitches[i] == midiPitch) {
@@ -209,10 +226,19 @@ public class ChordMap implements Comparable<ChordMap> {
         return -1;
     }
 
+    /**
+     * Gets the pitch of a given string
+     * @param string the string for which the pitch is wanted
+     * @return the MIDI pitch of the given string
+     */
     public int getStringPitch(int string) {
         return pitches[string];
     }
     
+    /**
+     * gets the array of all strings' pitches
+     * @return the array of all strings' pitches
+     */
     public int[] getPitches() {
         return pitches;
     }

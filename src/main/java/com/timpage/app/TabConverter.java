@@ -37,49 +37,49 @@ public class TabConverter {
 
 
     /**
-     * Constructor for the TabConverter object
+     * Constructor for the TabConverter object. Only used in testing
      * Handles the parsing of the given file in preparation of its conversion to tab
      * @param filename the name of the file to be converted to tab
      * @throws IOException if the input file cannot be read
      */
-    public TabConverter(String filename) throws IOException {
-        try {
-            parser = new musicXMLparserDH(filename);
-            parser.parseMusicXML();
-            songPartMatrix = parser.getSongPartMatrix();
-            guitar = new Guitar();
-            if (filename.contains(".xml")) {
-                int end = filename.lastIndexOf(".xml");
-                String start = filename.substring(0, end);
-                destFileName = start + "-tab" + ".xml";
-            }
-            else if (filename.contains(".musicxml")) {
-                int end = filename.lastIndexOf(".musicxml");
-                String start = filename.substring(0, end);
-                destFileName = start + "-tab" + ".musicxml";
-            }
-            else {
-                destFileName = filename + "-tab";
-            }
-            InputStream is = new FileInputStream(filename) {
-                @Override
-                public int read() throws IOException {
-                    return 0;
-                }
-            };
-            doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
-            if (doc.getElementsByTag("note").isEmpty()) {
-                doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
-                if (doc.getElementsByTag("note").isEmpty()) {
-                    System.out.println("Please check that your file is encoded in UTF-8 or UTF-16 and contains notes.");
-                }
-            }
+    // public TabConverter(String filename) throws IOException {
+    //     try {
+    //         parser = new musicXMLparserDH(filename);
+    //         parser.parseMusicXML();
+    //         songPartMatrix = parser.getSongPartMatrix();
+    //         guitar = new Guitar();
+    //         if (filename.contains(".xml")) {
+    //             int end = filename.lastIndexOf(".xml");
+    //             String start = filename.substring(0, end);
+    //             destFileName = start + "-tab" + ".xml";
+    //         }
+    //         else if (filename.contains(".musicxml")) {
+    //             int end = filename.lastIndexOf(".musicxml");
+    //             String start = filename.substring(0, end);
+    //             destFileName = start + "-tab" + ".musicxml";
+    //         }
+    //         else {
+    //             destFileName = filename + "-tab";
+    //         }
+    //         InputStream is = new FileInputStream(filename) {
+    //             @Override
+    //             public int read() throws IOException {
+    //                 return 0;
+    //             }
+    //         };
+    //         doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
+    //         if (doc.getElementsByTag("note").isEmpty()) {
+    //             doc = Jsoup.parse(is, "UTF-8", "", Parser.xmlParser());
+    //             if (doc.getElementsByTag("note").isEmpty()) {
+    //                 System.out.println("Please check that your file is encoded in UTF-8 or UTF-16 and contains notes.");
+    //             }
+    //         }
             
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //     }
              
-    }
+    // }
 
     /**
      * Constructor for the TabConverter object
@@ -90,12 +90,13 @@ public class TabConverter {
     public TabConverter(File file) throws IOException {
         try {
             String filename = file.getName();
+            // parse file and store note information into songPartMatrix
             parser = new musicXMLparserDH(file);
             parser.parseMusicXML();
             songPartMatrix = parser.getSongPartMatrix();
             guitar = new Guitar();
             if (!filename.contains(".xml") && !filename.contains(".musicxml")) {
-                throw new IOException("input file potentially the wrong format");
+                throw new IOException("Input file potentially the wrong format. Make sure it has the '.musicxml' or '.xml' extension.");
             }
             int end = filename.lastIndexOf(".");
             String startString = filename.substring(0, end);
@@ -228,11 +229,9 @@ public class TabConverter {
                 staffTuning.appendChild(tuningOctave);
             }
 
-            // iterate through each slice
-            // System.out.println("songPartMatrix.get(" + l + ").size(): " + songPartMatrix.get(l).size());
-            
+            // iterate through each chord
             for (int i=0; i<songPartMatrix.get(l).size(); i++) {
-                // removes duplicate lines 
+                // removes duplicate chords
                 if (i > 0 && songPartMatrix.get(l).get(i-1).equals(songPartMatrix.get(l).get(i))) {
                     songPartMatrix.get(l).remove(i);
                     i--;
@@ -257,6 +256,7 @@ public class TabConverter {
                     Enumeration<Integer> strings = bestPath.get(i).getFretting().keys();
                     for (int j=0; j<songPartMatrix.get(l).get(i).size(); j++) {
                         int string = strings.nextElement();
+                        // write assignments to the note objects
                         songPartMatrix.get(l).get(i).get(j).setStringNo(string);
                         songPartMatrix.get(l).get(i).get(j).setFretNo(bestPath.get(i).getFretting().get(string));
                     }
@@ -315,7 +315,6 @@ public class TabConverter {
                     boolean aRest = false;
                     Element thisnote = thismeasure.getElementsByTag("note").get(j);
                     while (aNote == false && offset < numNotes) {
-                        // System.out.println((offset+j) + "  " + offset + " " + j + "  " + songPartMatrix.get(l).get(i).get(j).getMeasure() + "  " + numNotes);
                         thisnote = thismeasure.getElementsByTag("note").get(offset);
                         //ignore rests (they don't have a pitch) and tab notes
                         if (thisnote.select("staff").isEmpty() || thisnote.getElementsByTag("staff").first().ownText() == "1") { 
@@ -428,31 +427,32 @@ public class TabConverter {
             if (assignNote(new ChordMap(), chordNotes, new ArrayList<>())) {
                 // sort the ChordMaps by score
                 Collections.sort(chordMappings.get(chordNotes));
-                System.out.println("new chord");
-                for (int i=0; i<6; i++) {
-                    for (ChordMap cm: chordMappings.get(chordNotes)) {
-                        if (cm.getFretting().containsKey(i) && cm.getFretting().get(i) != null) {
-                            int fret = cm.getFretting().get(i);
-                            if (fret > 9) {
-                                System.out.printf(fret + "  - ");
-                            }
-                            else {
-                                System.out.printf(" " + fret + "  - ");
-                            }
-                        }
-                        else {
-                            System.out.printf(" -  - ");
-                        }
+                // uncomment the below code to print each chord fingering and its score
+                // System.out.println("new chord");
+                // for (int i=0; i<6; i++) {
+                //     for (ChordMap cm: chordMappings.get(chordNotes)) {
+                //         if (cm.getFretting().containsKey(i) && cm.getFretting().get(i) != null) {
+                //             int fret = cm.getFretting().get(i);
+                //             if (fret > 9) {
+                //                 System.out.printf(fret + "  - ");
+                //             }
+                //             else {
+                //                 System.out.printf(" " + fret + "  - ");
+                //             }
+                //         }
+                //         else {
+                //             System.out.printf(" -  - ");
+                //         }
 
-                    }
-                    System.out.println("");
-                }
+                //     }
+                //     System.out.println("");
+                // }
                 // System.out.println("Your ranking from best to worst:");
                 // for (ChordMap cm: chordMappings.get(chordNotes)) {
-                //     System.out.printf(" n  - ");
+                //     System.out.printf(" %f  - ", cm.getScore());
                 // }
-                System.out.println("");
-                System.out.println("");
+                // System.out.println("");
+                // System.out.println("");
             }
             else {
                 System.out.println("Failed to convert chord to tab");
@@ -578,29 +578,34 @@ public class TabConverter {
         }
         ArrayList<ArrayList<Note>> section = new ArrayList<>();
         bestPath = new ArrayList<>();
-        boolean overflow = false;
+        boolean overflow = false; // for artificial section divisions
         boolean removeLinkChord = false;
-        int sectionSizeLimit = 12; // true size is 1 more
+        int sectionSizeLimit = 12;
         for (int i=0; i<=smPart.size(); i++) {
+            // end of the section
             if (i == smPart.size() || (smPart.get(i).size() == 0 && !section.isEmpty()) || section.size() == sectionSizeLimit) {
                 ArrayList<ChordMap> startPath = new ArrayList<>();
                 float startScore =  0f;
                 int startCounter = 1;
                 if (overflow == true) {
+                    // when a section length is the limit length followed by a rest or the end of the song
                     if (section.size() == 1 && (i == smPart.size() || smPart.get(i).size() == 0)) {
                         section.clear();
                         overflow = false;
                         continue;
                     }
+                    // the chord which gets passed on to be the start of the next section as well
                     ChordMap linkMap = bestPath.get(bestPath.size()-1);
                     startPath.add(linkMap);
                     overflow = false;
                     removeLinkChord = true;
                 }
+                // section size limit reached and last chord is not a rest or the end of the song
                 if (section.size() == sectionSizeLimit && (i != smPart.size() && smPart.get(i).size() > 0)) {
                     section.add(smPart.get(i));
                     overflow = true;
                 }
+                // flexible search limit calculation
                 if (section.size() > 10) {
                     searchLimit = 20-section.size();
                     if (searchLimit < 4) {
@@ -614,11 +619,13 @@ public class TabConverter {
                     searchLimit = 20;
                 }
                 currentBest = -1;
+                // recursively calculate preferred path for the section
                 ArrayList<ChordMap> sectionPath = addToPath(allTransitions, section, startPath, startCounter, startScore);
                 if (removeLinkChord) {
                     sectionPath.remove(0);
                     removeLinkChord = false;
                 }
+                // add the section path to the full song's path without the duplicate starting chord
                 bestPath.addAll(sectionPath);
                 if (overflow == true) {
                     ArrayList<Note> linkChord = section.get(section.size()-1);
@@ -629,6 +636,7 @@ public class TabConverter {
                     section.clear();
                 }
             }
+            // add chord to the section
             else if (smPart.get(i).size() > 0) {
                 section.add(smPart.get(i));
             }

@@ -3,7 +3,6 @@
     <head>
         <title>tabConverter - Display Page</title>
         <meta http-equiv="Content-Type" content="text/html; charset-UTF-8">
-        <%-- <link rel="stylesheet" href="style.css"> --%>
     </head>
     <body style="text-align: center">
         <h2>Your converted tab:</h2>

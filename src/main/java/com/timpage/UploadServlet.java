@@ -14,7 +14,6 @@ import com.timpage.app.App;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.io.FileExistsException;
 
 public class UploadServlet extends HttpServlet {
    
@@ -80,17 +79,12 @@ public class UploadServlet extends HttpServlet {
             out.println("<head>");
             out.println("<title>Servlet upload</title>");  
             out.println("</head>");
-            out.println("<body>");
+            out.println("<body style='text-align: center'>");
     
             while ( i.hasNext () ) {
                 FileItem fi = (FileItem)i.next();
                 if ( !fi.isFormField () ) {
-                    // Get the uploaded file parameters
-                    // String fieldName = fi.getFieldName();
                     String fileName = fi.getName();
-                    // String contentType = fi.getContentType();
-                    boolean isInMemory = fi.isInMemory();
-                    // long sizeInBytes = fi.getSize();
                     
                     int num = 0;
                     String defaultFileName = fileName.substring(fileName.lastIndexOf("/")+1);
@@ -103,22 +97,24 @@ public class UploadServlet extends HttpServlet {
                     }
                     System.out.println(filePath + fileName);
                     fi.write( file );
-                    out.println("Uploaded Filename: " + fileName + "<br>");
+                    out.println("<br>Uploaded Filename: " + fileName + "<br>");
                 }
             }
-            out.println("</body>");
-            out.println("</html>");
-            //todo figure out where to redirect in the case where there are multiple files uploaded
-            long startTime = System.currentTimeMillis();
+            // uncomment the relevant lines below to see how long the computation for tab assignment takes
+            // long startTime = System.currentTimeMillis();
             App runTC = new App(file);
-            long endTime = System.currentTimeMillis();
-            System.out.println("*****Transition calculations took " + (endTime - startTime) + " milliseconds*******");
+            // long endTime = System.currentTimeMillis();
+            // System.out.println("*****Transition calculations took " + (endTime - startTime) + " milliseconds*******");
             String fileName = runTC.getNewFileName().substring(runTC.getNewFileName().lastIndexOf("/")+1, runTC.getNewFileName().length());
             String newFilePath = "/data/" + fileName;
             request.setAttribute("filename", newFilePath);
             request.getRequestDispatcher("/WEB-INF/pages/showtab.jsp").forward(request, response);
         } catch(Exception ex) {
             ex.printStackTrace();
+            out.println("<br>File could not be converted to tab.  <br>");
+            out.println("Input file potentially the wrong format. Make sure it has the '.musicxml' or '.xml' extension.");
+            out.println("</body>");
+            out.println("</html>");
         }
     }
 
