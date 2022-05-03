@@ -284,6 +284,15 @@ public class musicXMLparserDH extends HttpServlet {
                                 note.addJoin("pull-off", pullOffNum, pullOff.attr("type"), note.getMidiPitch());
                             }
                         }
+                        if (!thisnote.getElementsByTag("slur").isEmpty()){
+                            for (Element slur: thisnote.getElementsByTag("slur")) {
+                                int slurNum = 1;
+                                if (slur.attr("number") != "") {
+                                    slurNum = Integer.valueOf(slur.attr("number"));
+                                }
+                                note.addJoin("slur", slurNum, slur.attr("type"), note.getMidiPitch());
+                            }
+                        }
 
                         // check if it is part of a chord
                         if (!thisnote.getElementsByTag("chord").isEmpty()) {
