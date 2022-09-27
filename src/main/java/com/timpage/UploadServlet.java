@@ -79,40 +79,42 @@ public class UploadServlet extends HttpServlet {
             out.println("<head>");
             out.println("<title>Servlet upload</title>");  
             out.println("</head>");
-            out.println("<body>");
+            out.println("<body style='text-align: center'>");
     
             while ( i.hasNext () ) {
                 FileItem fi = (FileItem)i.next();
                 if ( !fi.isFormField () ) {
-                    // Get the uploaded file parameters
-                    // String fieldName = fi.getFieldName();
                     String fileName = fi.getName();
-                    // String contentType = fi.getContentType();
-                    boolean isInMemory = fi.isInMemory();
-                    // long sizeInBytes = fi.getSize();
                     
-                    // Write the file
-                    // if( fileName.lastIndexOf("/") >= 0 ) {
-                        // file = new File( filePath + fileName.substring( fileName.lastIndexOf("/"))) ;
-                        // System.out.println("made new " + file.getAbsolutePath() + " " + isInMemory);
-                    // } else {
-                        file = new File( filePath + fileName.substring(fileName.lastIndexOf("/")+1)) ;
-                        System.out.println("made new " + file.getAbsolutePath() + " " + isInMemory);
-                    // }
-                    fi.write( file ) ;
-                    out.println("Uploaded Filename: " + fileName + "<br>");
+                    int num = 0;
+                    String defaultFileName = fileName.substring(fileName.lastIndexOf("/")+1);
+                    fileName = defaultFileName;
+                    file = new File(filePath + defaultFileName);
+                    while(file.exists()) {
+                        fileName = defaultFileName.substring(0, defaultFileName.lastIndexOf(".")) 
+                                + (num++) + defaultFileName.substring(defaultFileName.lastIndexOf("."));
+                        file = new File(filePath + fileName); 
+                    }
+                    System.out.println(filePath + fileName);
+                    fi.write( file );
+                    out.println("<br>Uploaded Filename: " + fileName + "<br>");
                 }
             }
-            out.println("</body>");
-            out.println("</html>");
-            //todo figure out where to redirect in the case where there are multiple files uploaded
+            // uncomment the relevant lines below to see how long the computation for tab assignment takes
+            // long startTime = System.currentTimeMillis();
             App runTC = new App(file);
+            // long endTime = System.currentTimeMillis();
+            // System.out.println("*****Transition calculations took " + (endTime - startTime) + " milliseconds*******");
             String fileName = runTC.getNewFileName().substring(runTC.getNewFileName().lastIndexOf("/")+1, runTC.getNewFileName().length());
             String newFilePath = "/data/" + fileName;
             request.setAttribute("filename", newFilePath);
             request.getRequestDispatcher("/WEB-INF/pages/showtab.jsp").forward(request, response);
         } catch(Exception ex) {
             ex.printStackTrace();
+            out.println("<br>File could not be converted to tab.  <br>");
+            out.println("Input file potentially the wrong format. Make sure it has the '.musicxml' or '.xml' extension.");
+            out.println("</body>");
+            out.println("</html>");
         }
     }
 
